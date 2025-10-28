@@ -8,6 +8,7 @@ import { ActionsPanel } from "../components/pos/ActionsPanel";
 import { TotalsPanel } from "../components/pos/TotalsPanel";
 import { PaymentButtons } from "../components/pos/PaymentButtons";
 import { PosLineForm, LineFormResult, LineFormValues } from "../components/pos/PosLineForm";
+import { Keypad } from "../components/pos/Keypad";
 import { POS_SHORTCUTS } from "../lib/shortcuts";
 import { formatMoney } from "../lib/money";
 import { CartItem, PaymentMethod, Product } from "../features/cart/types";
@@ -57,6 +58,7 @@ export function PosPage() {
   const [priceCheckCode, setPriceCheckCode] = useState("");
   const [priceCheckResult, setPriceCheckResult] = useState<CartItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   const selectedItem = useMemo(() => items.find((item) => item.id === selectedItemId), [items, selectedItemId]);
 
@@ -189,6 +191,19 @@ export function PosPage() {
     setToast("Ieșire din POS (operațiune simulată)");
   };
 
+  const toggleKeyboard = () => {
+    setKeyboardOpen((prev) => {
+      const next = !prev;
+      setToast(next ? "Tastatura numerică activată" : "Tastatura numerică închisă");
+      return next;
+    });
+  };
+
+  const closeKeyboard = () => {
+    setKeyboardOpen(false);
+    setToast("Tastatura numerică închisă");
+  };
+
   return (
     <main className="min-h-screen bg-slate-100 p-6 lg:p-10">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-6">
@@ -246,7 +261,7 @@ export function PosPage() {
                 onPriceCheck={openPriceCheck}
                 onDelete={() => selectedItemId && removeItem(selectedItemId)}
                 onAddPackaging={handlePackaging}
-                onToggleKeyboard={() => setToast("Tastatura virtuală nu este disponibilă în demo")}
+                onToggleKeyboard={toggleKeyboard}
                 onExit={handleExit}
                 hasSelection={Boolean(selectedItemId)}
               />
@@ -254,6 +269,8 @@ export function PosPage() {
           </div>
         </div>
       </div>
+
+      <Keypad open={keyboardOpen} onClose={closeKeyboard} />
 
       {priceCheckOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
