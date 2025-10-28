@@ -28,6 +28,7 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
           className={clsx(inputClass, "font-semibold text-lg")}
           value={cashGiven}
           inputMode="decimal"
+          data-keyboard="numeric"
           onChange={(event) => onCashChange(parseNumericInput(event.target.value))}
         />
       </label>

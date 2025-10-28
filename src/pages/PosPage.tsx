@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { nanoid } from "nanoid/non-secure";
 import { useCartStore } from "../app/store";
@@ -191,17 +191,39 @@ export function PosPage() {
     setToast("Ieșire din POS (operațiune simulată)");
   };
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const handleFocusIn = (event: Event) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement
+      ) {
+        if (target.readOnly || target.disabled || target.type === "hidden") {
+          return;
+        }
+        setKeyboardOpen(true);
+      }
+    };
+    document.addEventListener("focusin", handleFocusIn);
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, []);
+
   const toggleKeyboard = () => {
     setKeyboardOpen((prev) => {
       const next = !prev;
-      setToast(next ? "Tastatura numerică activată" : "Tastatura numerică închisă");
+      setToast(next ? "Tastatura pe ecran activată" : "Tastatura pe ecran închisă");
       return next;
     });
   };
 
   const closeKeyboard = () => {
     setKeyboardOpen(false);
-    setToast("Tastatura numerică închisă");
+    setToast("Tastatura pe ecran închisă");
   };
 
   return (
@@ -287,6 +309,8 @@ export function PosPage() {
                 onChange={(event) => setPriceCheckCode(event.target.value)}
                 className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"
                 placeholder="UPC"
+                inputMode="decimal"
+                data-keyboard="numeric"
               />
               <button
                 type="button"

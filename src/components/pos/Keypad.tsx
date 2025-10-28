@@ -8,6 +8,8 @@ interface KeypadProps {
   onClose: () => void;
 }
 
+type KeyboardMode = "numeric" | "text";
+
 function isEditable(element: Element | null): element is InputTarget {
   return (
     !!element &&
@@ -23,6 +25,25 @@ function getActiveEditable(): InputTarget | null {
     return active;
   }
   return null;
+}
+
+function getKeyboardMode(target: InputTarget | null): KeyboardMode {
+  if (!target) {
+    return "numeric";
+  }
+  const explicitMode = target.getAttribute("data-keyboard");
+  if (explicitMode === "numeric" || explicitMode === "text") {
+    return explicitMode;
+  }
+  if (target instanceof HTMLInputElement) {
+    if (target.type === "number" || target.type === "tel") {
+      return "numeric";
+    }
+  }
+  if (target.inputMode === "numeric" || target.inputMode === "decimal") {
+    return "numeric";
+  }
+  return "text";
 }
 
 function extractLabel(target: InputTarget | null): string {
@@ -63,6 +84,17 @@ export function Keypad({ open, onClose }: KeypadProps) {
 
   useEffect(() => {
     if (!open) return;
+    const handleFocusIn = () => {
+      setTarget(getActiveEditable());
+    };
+    document.addEventListener("focusin", handleFocusIn);
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -74,6 +106,7 @@ export function Keypad({ open, onClose }: KeypadProps) {
   }, [open, onClose]);
 
   const label = useMemo(() => extractLabel(target), [target]);
+  const mode = useMemo(() => getKeyboardMode(target), [target]);
 
   const ensureFocus = () => {
     const element = target ?? getActiveEditable();
@@ -99,11 +132,11 @@ export function Keypad({ open, onClose }: KeypadProps) {
     element.dispatchEvent(new Event("input", { bubbles: true }));
   };
 
-  const handleDigit = (digit: string) => {
+  const handleInsert = (text: string) => {
     updateValue((value, start, end) => {
-      const sanitizedDigit = digit === "," ? "." : digit;
-      const nextValue = value.slice(0, start) + sanitizedDigit + value.slice(end);
-      return { value: nextValue, caret: start + sanitizedDigit.length };
+      const sanitized = mode === "numeric" && text === "," ? "." : text;
+      const nextValue = value.slice(0, start) + sanitized + value.slice(end);
+      return { value: nextValue, caret: start + sanitized.length };
     });
   };
 
@@ -156,10 +189,11 @@ export function Keypad({ open, onClose }: KeypadProps) {
     return null;
   }
 
+  const heading = mode === "numeric" ? "Tastatură numerică" : "Tastatură QWERTY";
   const buttonClass =
-    "h-16 rounded-2xl bg-slate-900 text-white text-2xl font-semibold shadow-md hover:bg-slate-800 active:bg-slate-900 transition";
+    "rounded-2xl bg-slate-900 text-white font-semibold shadow-md hover:bg-slate-800 active:bg-slate-900 transition";
   const controlClass =
-    "h-16 rounded-2xl bg-white border border-gray-200 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand-indigo hover:text-brand-indigo transition";
+    "rounded-2xl bg-white border border-gray-200 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand-indigo hover:text-brand-indigo transition";
 
   const handlePointerDown = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -171,8 +205,9 @@ export function Keypad({ open, onClose }: KeypadProps) {
       <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500">Tastatură numerică</p>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Tastatură pe ecran</p>
             <p className="text-sm font-semibold text-slate-900">{label}</p>
+            <p className="text-xs text-gray-400 mt-1">{heading}</p>
           </div>
           <button
             type="button"
@@ -183,97 +218,166 @@ export function Keypad({ open, onClose }: KeypadProps) {
             Închide
           </button>
         </header>
-        <div className="mt-6 grid grid-cols-4 gap-3">
-          {["7", "8", "9"].map((digit) => (
+        {mode === "numeric" ? (
+          <div className="mt-6 grid grid-cols-4 gap-3">
+            {["7", "8", "9"].map((digit) => (
+              <button
+                key={digit}
+                type="button"
+                className={clsx(buttonClass, "h-16 text-2xl")}
+                onMouseDown={handlePointerDown}
+                onClick={() => handleInsert(digit)}
+              >
+                {digit}
+              </button>
+            ))}
             <button
-              key={digit}
               type="button"
-              className={buttonClass}
+              className={clsx(controlClass, "h-16 text-lg")}
               onMouseDown={handlePointerDown}
-              onClick={() => handleDigit(digit)}
+              onClick={handleBackspace}
             >
-              {digit}
+              ⌫
             </button>
-          ))}
-          <button
-            type="button"
-            className={clsx(controlClass, "text-lg")}
-            onMouseDown={handlePointerDown}
-            onClick={handleBackspace}
-          >
-            ⌫
-          </button>
-          {["4", "5", "6"].map((digit) => (
+            {["4", "5", "6"].map((digit) => (
+              <button
+                key={digit}
+                type="button"
+                className={clsx(buttonClass, "h-16 text-2xl")}
+                onMouseDown={handlePointerDown}
+                onClick={() => handleInsert(digit)}
+              >
+                {digit}
+              </button>
+            ))}
             <button
-              key={digit}
               type="button"
-              className={buttonClass}
+              className={clsx(controlClass, "h-16 text-base")}
               onMouseDown={handlePointerDown}
-              onClick={() => handleDigit(digit)}
+              onClick={handleClear}
             >
-              {digit}
+              Șterge
             </button>
-          ))}
-          <button
-            type="button"
-            className={controlClass}
-            onMouseDown={handlePointerDown}
-            onClick={handleClear}
-          >
-            Șterge
-          </button>
-          {["1", "2", "3"].map((digit) => (
+            {["1", "2", "3"].map((digit) => (
+              <button
+                key={digit}
+                type="button"
+                className={clsx(buttonClass, "h-16 text-2xl")}
+                onMouseDown={handlePointerDown}
+                onClick={() => handleInsert(digit)}
+              >
+                {digit}
+              </button>
+            ))}
             <button
-              key={digit}
               type="button"
-              className={buttonClass}
+              className={clsx(controlClass, "h-16 text-base")}
               onMouseDown={handlePointerDown}
-              onClick={() => handleDigit(digit)}
+              onClick={handleToggleSign}
             >
-              {digit}
+              ±
             </button>
-          ))}
-          <button
-            type="button"
-            className={controlClass}
-            onMouseDown={handlePointerDown}
-            onClick={handleToggleSign}
-          >
-            ±
-          </button>
-          <button
-            type="button"
-            className={buttonClass}
-            onMouseDown={handlePointerDown}
-            onClick={() => handleDigit("0")}
-          >
-            0
-          </button>
-          <button
-            type="button"
-            className={buttonClass}
-            onMouseDown={handlePointerDown}
-            onClick={() => handleDigit("00")}
-          >
-            00
-          </button>
-          <button
-            type="button"
-            className={buttonClass}
-            onMouseDown={handlePointerDown}
-            onClick={() => handleDigit(",")}
-          >
-            ,
-          </button>
-          <button
-            type="button"
-            className="h-16 rounded-2xl bg-indigo-600 text-white text-lg font-semibold shadow-md hover:bg-indigo-500 transition"
-            onMouseDown={handlePointerDown}
-            onClick={handleEnter}
-          >
-            Enter
-          </button>
-        </div>
+            <button
+              type="button"
+              className={clsx(buttonClass, "h-16 text-2xl")}
+              onMouseDown={handlePointerDown}
+              onClick={() => handleInsert("0")}
+            >
+              0
+            </button>
+            <button
+              type="button"
+              className={clsx(buttonClass, "h-16 text-2xl")}
+              onMouseDown={handlePointerDown}
+              onClick={() => handleInsert("00")}
+            >
+              00
+            </button>
+            <button
+              type="button"
+              className={clsx(buttonClass, "h-16 text-2xl")}
+              onMouseDown={handlePointerDown}
+              onClick={() => handleInsert(",")}
+            >
+              ,
+            </button>
+            <button
+              type="button"
+              className="h-16 rounded-2xl bg-indigo-600 text-white text-lg font-semibold shadow-md hover:bg-indigo-500 transition"
+              onMouseDown={handlePointerDown}
+              onClick={handleEnter}
+            >
+              Enter
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 flex flex-col gap-3">
+            {[
+              ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+              ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+              ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
+              ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"]
+            ].map((row, index) => (
+              <div key={index} className="grid grid-cols-10 gap-2">
+                {row.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={clsx(buttonClass, "h-12 text-lg")}
+                    onMouseDown={handlePointerDown}
+                    onClick={() => handleInsert(key)}
+                  >
+                    {key}
+                  </button>
+                ))}
+              </div>
+            ))}
+            <div className="grid grid-cols-5 gap-2">
+              <button
+                type="button"
+                className={clsx(buttonClass, "col-span-3 h-12 text-lg")}
+                onMouseDown={handlePointerDown}
+                onClick={() => handleInsert(" ")}
+              >
+                Spațiu
+              </button>
+              <button
+                type="button"
+                className={clsx(controlClass, "h-12 text-base")}
+                onMouseDown={handlePointerDown}
+                onClick={handleBackspace}
+              >
+                ⌫
+              </button>
+              <button
+                type="button"
+                className={clsx(controlClass, "h-12 text-base")}
+                onMouseDown={handlePointerDown}
+                onClick={handleClear}
+              >
+                Șterge
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className={clsx(controlClass, "h-12 text-base")}
+                onMouseDown={handlePointerDown}
+                onClick={() => handleInsert("-")}
+              >
+                -
+              </button>
+              <button
+                type="button"
+                className="h-12 rounded-2xl bg-indigo-600 text-white text-base font-semibold shadow-md hover:bg-indigo-500 transition"
+                onMouseDown={handlePointerDown}
+                onClick={handleEnter}
+              >
+                Enter
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

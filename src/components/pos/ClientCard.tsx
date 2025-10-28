@@ -49,6 +49,9 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Card ID</span>
           <input
+            type="number"
+            inputMode="numeric"
+            data-keyboard="numeric"
             value={customer.cardId ?? ""}
             onChange={handleChange("cardId")}
             className={inputClassName}
@@ -68,6 +71,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             value={customer.lastName ?? ""}
             onChange={handleChange("lastName")}
             className={inputClassName}
+            data-keyboard="text"
             placeholder="Nume client"
           />
         </label>
@@ -77,6 +81,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             value={customer.firstName ?? ""}
             onChange={handleChange("firstName")}
             className={inputClassName}
+            data-keyboard="text"
             placeholder="Prenume"
           />
         </label>
@@ -89,6 +94,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             value={customer.discountPercent ?? 0}
             onChange={handleChange("discountPercent")}
             className={clsx(inputClassName, "[appearance:textfield]")}
+            data-keyboard="numeric"
           />
         </label>
         <div className="flex flex-col gap-1">

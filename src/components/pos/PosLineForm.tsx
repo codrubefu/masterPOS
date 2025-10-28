@@ -151,6 +151,7 @@ export function PosLineForm({
             value={form.upc}
             onChange={(event) => setForm((prev) => ({ ...prev, upc: event.target.value }))}
             className={inputClass}
+            data-keyboard="numeric"
             placeholder="Scanați codul"
           />
         </label>
@@ -162,6 +163,7 @@ export function PosLineForm({
             onChange={(event) => setForm((prev) => ({ ...prev, qty: event.target.value }))}
             className={inputClass}
             inputMode="decimal"
+            data-keyboard="numeric"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -172,6 +174,7 @@ export function PosLineForm({
             onChange={(event) => setForm((prev) => ({ ...prev, price: event.target.value }))}
             className={inputClass}
             inputMode="decimal"
+            data-keyboard="numeric"
           />
         </label>
         <label className="flex flex-col gap-1 col-span-2">
@@ -180,6 +183,7 @@ export function PosLineForm({
             value={form.name}
             onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             className={inputClass}
+            data-keyboard="text"
             placeholder="Adăugați o denumire"
           />
         </label>
@@ -190,6 +194,7 @@ export function PosLineForm({
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             className={inputClass}
+            data-keyboard="text"
             placeholder="Introduceți denumire sau cod"
           />
           {searchTerm && suggestions.length > 0 && (
@@ -225,6 +230,7 @@ export function PosLineForm({
               }
               className={inputClass}
               inputMode="decimal"
+              data-keyboard="numeric"
             />
             <button
               type="button"
