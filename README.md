@@ -34,6 +34,31 @@ Aplicația este disponibilă implicit la [http://localhost:5173](http://localhos
 npm run build
 ```
 
+## Aplicație desktop (Tauri)
+
+### Cerințe
+
+- Node.js și npm instalate
+- [Rust](https://www.rust-lang.org/tools/install) (minimum edition 2021)
+- Pe Windows: "Desktop development with C++" din Visual Studio Build Tools sau Visual Studio 2022
+- (Opțional) `npm install -D @tauri-apps/cli` pentru a utiliza CLI-ul local
+
+### Rulare în modul desktop
+
+```bash
+npm run tauri:dev
+```
+
+### Build executabil Windows (.msi)
+
+```bash
+npm run tauri:build
+```
+
+Pachetul MSI rezultat este generat în `src-tauri/target/release/bundle/msi/`.
+
+Configurația Tauri poate fi personalizată în `src-tauri/tauri.conf.json` (de exemplu, nume aplicație, identificator, dimensiuni fereastră). Pentru a schimba iconițele utilizate la instalare, actualizați fișierele din `src-tauri/icons/` și referințele din configurație.
+
 ## Teste
 
 ```bash
