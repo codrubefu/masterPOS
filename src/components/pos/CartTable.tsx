@@ -14,7 +14,7 @@ interface CartTableProps {
 
 export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown }: CartTableProps) {
   return (
-    <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col h-screen overflow-hidden">
+    <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col h-screen overflow-hidden w-full">
       <header className="flex items-center justify-between pb-2 border-b border-slate-200 flex-shrink-0">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Bon fiscal</p>
