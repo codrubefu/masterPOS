@@ -29,20 +29,8 @@ export function ActionsPanel({
 
   return (
     <aside className="rounded-2xl bg-white shadow-card p-4 flex flex-col gap-3">
-      <button type="button" className={secondaryClass} onClick={onMoveUp} disabled={!hasSelection}>
-        ↑ Mută sus
-      </button>
-      <button type="button" className={secondaryClass} onClick={onMoveDown} disabled={!hasSelection}>
-        ↓ Mută jos
-      </button>
-      <button type="button" className={secondaryClass} onClick={onPriceCheck}>
-        Verifică preț
-      </button>
       <button type="button" className={secondaryClass} onClick={onAddPackaging}>
         Bon ambalaje
-      </button>
-      <button type="button" className={secondaryClass} onClick={onToggleKeyboard}>
-        Tastatură
       </button>
       <button type="button" className={secondaryClass} onClick={onDelete} disabled={!hasSelection}>
         Șterge produs

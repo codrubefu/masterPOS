@@ -243,13 +243,7 @@ export function PosPage() {
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 xl:col-span-4 flex flex-col gap-6">
             <ClientCard value={customer} onChange={setCustomer} />
-            <PosLineForm
-              onAdd={handleLineAdd}
-              selected={selectedItem ?? undefined}
-              subtotal={subtotal}
-              onToggleStorno={handleStorno}
-              defaultDiscount={customer?.discountPercent}
-            />
+           
             <TotalsPanel
               subtotal={subtotal}
               total={total}

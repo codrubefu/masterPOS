@@ -105,6 +105,34 @@ export function Keypad({ open, onClose }: KeypadProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (event: Event) => {
+      const keypadElement = document.querySelector('[data-keypad="true"]');
+      if (keypadElement && !keypadElement.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleFocusOut = () => {
+      // Small delay to allow for focus changes within the keypad
+      setTimeout(() => {
+        const activeElement = document.activeElement;
+        const keypadElement = document.querySelector('[data-keypad="true"]');
+        if (!isEditable(activeElement) && keypadElement && !keypadElement.contains(activeElement)) {
+          onClose();
+        }
+      }, 100);
+    };
+    document.addEventListener("focusout", handleFocusOut);
+    return () => document.removeEventListener("focusout", handleFocusOut);
+  }, [open, onClose]);
+
   const label = useMemo(() => extractLabel(target), [target]);
   const mode = useMemo(() => getKeyboardMode(target), [target]);
 
@@ -183,6 +211,7 @@ export function Keypad({ open, onClose }: KeypadProps) {
         form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
       }
     }
+    onClose();
   };
 
   if (!open) {
@@ -202,7 +231,7 @@ export function Keypad({ open, onClose }: KeypadProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center sm:justify-end sm:p-10">
-      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl" data-keypad="true">
         <header className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">Tastatură pe ecran</p>
