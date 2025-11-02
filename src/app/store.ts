@@ -29,8 +29,11 @@ export interface Receipt {
   timestamp: string;
 }
 
+interface PersistedCartState extends CartState {
+  receipts: Receipt[];
+}
+
 interface CartStore extends CartState {
-  customer?: Customer;
   receipts: Receipt[];
   customerOptions: Customer[];
   addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => { success: boolean; itemId?: string };
@@ -78,7 +81,7 @@ const memoryStorage: Storage = {
   setItem: () => undefined
 };
 
-const storage = createJSONStorage<CartStore>(() =>
+const storage = createJSONStorage(() =>
   typeof window !== "undefined" && window.localStorage ? window.localStorage : memoryStorage
 );
 
@@ -240,7 +243,8 @@ export const useCartStore = create<CartStore>()(
         customer: state.customer,
         selectedItemId: state.selectedItemId,
         receipts: state.receipts,
-        paymentMethod: state.paymentMethod
+        paymentMethod: state.paymentMethod,
+        lastAction: state.lastAction
       })
     }
   )
