@@ -14,8 +14,8 @@ interface CartTableProps {
 
 export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown }: CartTableProps) {
   return (
-    <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col overflow-hidden">
-      <header className="flex items-center justify-between pb-2 border-b border-slate-200">
+    <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col h-screen overflow-hidden">
+      <header className="flex items-center justify-between pb-2 border-b border-slate-200 flex-shrink-0">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Bon fiscal</p>
           <h2 className="text-xl font-semibold text-slate-900">Produse scanate</h2>
@@ -25,7 +25,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
           {selectedId && <p>Linie selectată: {selectedId.slice(0, 6)}</p>}
         </div>
       </header>
-      <div className="mt-4 flex-1 overflow-auto">
+      <div className="mt-4 flex-1 overflow-auto min-h-0">
         <table className="w-full" role="grid">
           <thead className="sticky top-0 z-10 bg-slate-100 text-xs uppercase text-gray-500">
             <tr>
@@ -80,33 +80,17 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
-                            onMoveUp(item.id);
-                          }}
-                          className={rowButtonClass}
-                          aria-label="Mută sus"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onMoveDown(item.id);
-                          }}
-                          className={rowButtonClass}
-                          aria-label="Mută jos"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
                             onDelete(item.id);
                           }}
                           className={clsx(rowButtonClass, "bg-red-50 text-red-600 border-red-200")}
                         >
                           Șterge
+                        </button>
+                        <button
+                          type="button"
+                          className={clsx(rowButtonClass, "bg-green-50 text-green-600 border-green-200")}
+                        >
+                          Modifica
                         </button>
                       </div>
                     </td>

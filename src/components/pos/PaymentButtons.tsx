@@ -32,13 +32,13 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <button type="button" className={`${buttonClass} bg-amber-500 hover:bg-amber-400`} onClick={onPayMixed}>
-        Plata mixtă (F11)
+        Plata mixtă
       </button>
       <button type="button" className={`${buttonClass} bg-emerald-600 hover:bg-emerald-500`} onClick={onPayCash}>
-        Plata numerar (F9)
+        Plata numerar
       </button>
       <button type="button" className={`${buttonClass} bg-indigo-600 hover:bg-indigo-500`} onClick={onPayCard}>
-        Plata card (F10)
+        Plata card
       </button>
       <button type="button" className={`${buttonClass} bg-slate-800 hover:bg-slate-700`} onClick={onPayModern}>
         Plata modernă

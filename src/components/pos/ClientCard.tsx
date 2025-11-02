@@ -31,19 +31,16 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     onChange(next);
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      // Close the onscreen keyboard by blurring the input
+      event.currentTarget.blur();
+    }
+  };
+
   return (
-    <section className="rounded-2xl bg-white shadow-card p-5 flex flex-col gap-4">
-      <header className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-full bg-indigo-100 text-brand-indigo flex items-center justify-center font-semibold">
-          {customer.lastName?.charAt(0) ?? "C"}
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-wide text-gray-500">Client</p>
-          <p className="text-lg font-semibold text-slate-900">
-            {customer.lastName ?? "Persoană fizică"}
-          </p>
-        </div>
-      </header>
+    <section className="rounded-2xl bg-white shadow-card p-5 flex flex-col gap-4 mb-6">
 
       <div className="grid grid-cols-2 gap-4 text-sm">
         <label className="flex flex-col gap-1">
@@ -54,6 +51,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             data-keyboard="numeric"
             value={customer.cardId ?? ""}
             onChange={handleChange("cardId")}
+            onKeyDown={handleKeyDown}
             className={inputClassName}
             placeholder="Introduceți card"
           />

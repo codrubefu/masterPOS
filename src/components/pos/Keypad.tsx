@@ -76,22 +76,40 @@ function extractLabel(target: InputTarget | null): string {
 
 export function Keypad({ open, onClose }: KeypadProps) {
   const [target, setTarget] = useState<InputTarget | null>(null);
+  const [previewValue, setPreviewValue] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
-    setTarget(getActiveEditable());
+    const activeElement = getActiveEditable();
+    setTarget(activeElement);
+    setPreviewValue(activeElement?.value || "");
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const handleFocusIn = () => {
-      setTarget(getActiveEditable());
+      const activeElement = getActiveEditable();
+      setTarget(activeElement);
+      setPreviewValue(activeElement?.value || "");
     };
     document.addEventListener("focusin", handleFocusIn);
     return () => {
       document.removeEventListener("focusin", handleFocusIn);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !target) return;
+    
+    const handleInput = () => {
+      setPreviewValue(target.value);
+    };
+    
+    target.addEventListener("input", handleInput);
+    return () => {
+      target.removeEventListener("input", handleInput);
+    };
+  }, [open, target]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,34 +121,6 @@ export function Keypad({ open, onClose }: KeypadProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (event: Event) => {
-      const keypadElement = document.querySelector('[data-keypad="true"]');
-      if (keypadElement && !keypadElement.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleFocusOut = () => {
-      // Small delay to allow for focus changes within the keypad
-      setTimeout(() => {
-        const activeElement = document.activeElement;
-        const keypadElement = document.querySelector('[data-keypad="true"]');
-        if (!isEditable(activeElement) && keypadElement && !keypadElement.contains(activeElement)) {
-          onClose();
-        }
-      }, 100);
-    };
-    document.addEventListener("focusout", handleFocusOut);
-    return () => document.removeEventListener("focusout", handleFocusOut);
   }, [open, onClose]);
 
   const label = useMemo(() => extractLabel(target), [target]);
@@ -148,16 +138,38 @@ export function Keypad({ open, onClose }: KeypadProps) {
   const updateValue = (updater: (value: string, start: number, end: number) => { value: string; caret: number }) => {
     const element = ensureFocus();
     if (!element) return;
+    
+    // Check if the input type supports selection
+    const supportsSelection = element instanceof HTMLInputElement 
+      ? !["number", "email", "url", "tel", "date", "time", "datetime-local", "month", "week"].includes(element.type)
+      : true;
+    
     const { selectionStart, selectionEnd, value } = element;
-    const start = selectionStart ?? value.length;
-    const end = selectionEnd ?? start;
+    let start: number, end: number;
+    
+    if (supportsSelection) {
+      start = selectionStart ?? value.length;
+      end = selectionEnd ?? start;
+    } else {
+      // For inputs that don't support selection, work with the end of the text
+      start = value.length;
+      end = start;
+    }
+    
     const next = updater(value, start, end);
     element.value = next.value;
-    const caret = Math.max(0, Math.min(next.caret, element.value.length));
-    if (typeof element.setSelectionRange === "function") {
+    
+    if (supportsSelection && typeof element.setSelectionRange === "function") {
+      const caret = Math.max(0, Math.min(next.caret, element.value.length));
       element.setSelectionRange(caret, caret);
     }
+    
     element.dispatchEvent(new Event("input", { bubbles: true }));
+    
+    // Update preview value immediately to ensure sync
+    setTimeout(() => {
+      setPreviewValue(element.value);
+    }, 0);
   };
 
   const handleInsert = (text: string) => {
@@ -187,6 +199,9 @@ export function Keypad({ open, onClose }: KeypadProps) {
   };
 
   const handleToggleSign = () => {
+    const element = ensureFocus();
+    if (!element) return;
+    
     updateValue((value) => {
       if (!value) {
         return { value: "-", caret: 1 };
@@ -231,7 +246,10 @@ export function Keypad({ open, onClose }: KeypadProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center sm:justify-end sm:p-10">
-      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl" data-keypad="true">
+      <div className={clsx(
+        "rounded-3xl bg-white p-6 shadow-2xl",
+        mode === "text" ? "w-full max-w-6xl" : "w-full max-w-md"
+      )} data-keypad="true">
         <header className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">Tastatură pe ecran</p>
@@ -247,6 +265,15 @@ export function Keypad({ open, onClose }: KeypadProps) {
             Închide
           </button>
         </header>
+        
+        {/* Preview text area */}
+        <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Previzualizare</div>
+          <div className="min-h-[2rem] text-lg font-mono text-slate-900 break-all">
+            {previewValue || ""}
+          </div>
+        </div>
+
         {mode === "numeric" ? (
           <div className="mt-6 grid grid-cols-4 gap-3">
             {["7", "8", "9"].map((digit) => (
@@ -340,19 +367,19 @@ export function Keypad({ open, onClose }: KeypadProps) {
             </button>
           </div>
         ) : (
-          <div className="mt-6 flex flex-col gap-3">
+          <div className="mt-6 flex flex-col gap-4">
             {[
               ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
               ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
               ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
-              ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"]
+              ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"]  
             ].map((row, index) => (
-              <div key={index} className="grid grid-cols-10 gap-2">
+              <div key={index} className="grid grid-cols-10 gap-4">
                 {row.map((key) => (
                   <button
                     key={key}
                     type="button"
-                    className={clsx(buttonClass, "h-12 text-lg")}
+                    className={clsx(buttonClass, "h-16 text-xl")}
                     onMouseDown={handlePointerDown}
                     onClick={() => handleInsert(key)}
                   >
@@ -361,10 +388,10 @@ export function Keypad({ open, onClose }: KeypadProps) {
                 ))}
               </div>
             ))}
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-4">
               <button
                 type="button"
-                className={clsx(buttonClass, "col-span-3 h-12 text-lg")}
+                className={clsx(buttonClass, "col-span-3 h-16 text-lg")}
                 onMouseDown={handlePointerDown}
                 onClick={() => handleInsert(" ")}
               >
@@ -372,7 +399,7 @@ export function Keypad({ open, onClose }: KeypadProps) {
               </button>
               <button
                 type="button"
-                className={clsx(controlClass, "h-12 text-base")}
+                className={clsx(controlClass, "h-16 text-lg")}
                 onMouseDown={handlePointerDown}
                 onClick={handleBackspace}
               >
@@ -380,17 +407,17 @@ export function Keypad({ open, onClose }: KeypadProps) {
               </button>
               <button
                 type="button"
-                className={clsx(controlClass, "h-12 text-base")}
+                className={clsx(controlClass, "h-16 text-base")}
                 onMouseDown={handlePointerDown}
                 onClick={handleClear}
               >
                 Șterge
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-4">
               <button
                 type="button"
-                className={clsx(controlClass, "h-12 text-base")}
+                className={clsx(controlClass, "h-16 text-xl")}
                 onMouseDown={handlePointerDown}
                 onClick={() => handleInsert("-")}
               >
@@ -398,7 +425,7 @@ export function Keypad({ open, onClose }: KeypadProps) {
               </button>
               <button
                 type="button"
-                className="h-12 rounded-2xl bg-indigo-600 text-white text-base font-semibold shadow-md hover:bg-indigo-500 transition"
+                className="h-16 rounded-2xl bg-indigo-600 text-white text-lg font-semibold shadow-md hover:bg-indigo-500 transition col-span-3"
                 onMouseDown={handlePointerDown}
                 onClick={handleEnter}
               >

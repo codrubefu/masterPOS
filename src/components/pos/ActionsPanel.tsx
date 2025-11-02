@@ -8,17 +8,14 @@ interface ActionsPanelProps {
   onAddPackaging: () => void;
   onToggleKeyboard: () => void;
   onExit: () => void;
+  onAddProduct: () => void;
   hasSelection: boolean;
 }
 
 export function ActionsPanel({
-  onMoveUp,
-  onMoveDown,
-  onPriceCheck,
-  onDelete,
   onAddPackaging,
-  onToggleKeyboard,
-  onExit,
+  onAddProduct,
+  onPriceCheck,
   hasSelection
 }: ActionsPanelProps) {
   const buttonClass = "h-12 rounded-2xl bg-slate-900 text-white font-semibold text-sm px-4 flex items-center justify-center shadow-sm hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed";
@@ -32,14 +29,13 @@ export function ActionsPanel({
       <button type="button" className={secondaryClass} onClick={onAddPackaging}>
         Bon ambalaje
       </button>
-      <button type="button" className={secondaryClass} onClick={onDelete} disabled={!hasSelection}>
-        Șterge produs
+      <button type="button" className={secondaryClass} onClick={onAddProduct} disabled={!hasSelection}>
+        Adauga Produs
       </button>
-      <div className="pt-2 mt-auto border-t border-slate-200">
-        <button type="button" className={buttonClass} onClick={onExit}>
-          IEȘIRE
-        </button>
-      </div>
+
+      <button type="button" className={secondaryClass} onClick={onPriceCheck} disabled={!hasSelection}>
+        Verifica Pret
+      </button>
     </aside>
   );
 }
