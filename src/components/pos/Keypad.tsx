@@ -98,11 +98,13 @@ export function Keypad({ open, onClose }: KeypadProps) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        event.stopPropagation();
         onClose();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    const options: AddEventListenerOptions = { capture: true };
+    window.addEventListener("keydown", handleKeyDown, options);
+    return () => window.removeEventListener("keydown", handleKeyDown, options);
   }, [open, onClose]);
 
   const label = useMemo(() => extractLabel(target), [target]);
