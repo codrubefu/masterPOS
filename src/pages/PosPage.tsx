@@ -244,7 +244,7 @@ export function PosPage() {
           <p className="text-xs uppercase tracking-wide text-gray-500">masterPOS</p>
         </header>
         <div className="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
-          <div className="col-span-12 xl:col-span-5 flex gap-6">
+          <div className="col-span-12 col-span-5 flex gap-6">
             <CartTable
               items={items}
               selectedId={selectedItemId}
@@ -254,7 +254,7 @@ export function PosPage() {
               onMoveDown={moveItemDown}
             />
           </div>
-          <div className="col-span-12 xl:col-span-4 flex flex-col gap-6">
+          <div className="col-span-12 col-span-4 flex flex-col gap-6">
             <TotalsPanel
               subtotal={subtotal}
               total={total}
@@ -272,7 +272,7 @@ export function PosPage() {
           </div>
 
 
-          <div className="col-span-12 xl:col-span-3 flex gap-6">
+          <div className="col-span-12 col-span-3 flex gap-6">
             <div className="w-full max-w-xs">
               <ClientCard value={customer} onChange={setCustomer} />
               <ActionsPanel
