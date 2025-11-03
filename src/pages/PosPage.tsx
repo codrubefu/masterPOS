@@ -13,6 +13,7 @@ import { POS_SHORTCUTS } from "../lib/shortcuts";
 import { formatMoney } from "../lib/money";
 import { CartItem, PaymentMethod, Product } from "../features/cart/types";
 import { useRequestKeyboard } from "../lib/useRequestKeyboard";
+import { useGlobalRequestKeyboard } from "../lib/useGlobalRequestKeyboard";
 import { random } from "nanoid";
 
 export function PosPage() {
@@ -65,86 +66,7 @@ export function PosPage() {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   // Initialize global request keyboard functionality
-  useRequestKeyboard();
-
-  const selectedItem = useMemo(() => items.find((item) => item.id === selectedItemId), [items, selectedItemId]);
-
-  useHotkeys(
-    POS_SHORTCUTS.deleteLine,
-    (event) => {
-      if (!selectedItemId) return;
-      event.preventDefault();
-      removeItem(selectedItemId);
-    },
-    { enableOnFormTags: true },
-    [selectedItemId]
-  );
-
-  useHotkeys(
-    POS_SHORTCUTS.moveUp,
-    (event) => {
-      if (!selectedItemId) return;
-      event.preventDefault();
-      moveItemUp(selectedItemId);
-    },
-    { enableOnFormTags: true },
-    [selectedItemId]
-  );
-
-  useHotkeys(
-    POS_SHORTCUTS.moveDown,
-    (event) => {
-      if (!selectedItemId) return;
-      event.preventDefault();
-      moveItemDown(selectedItemId);
-    },
-    { enableOnFormTags: true },
-    [selectedItemId]
-  );
-
-  const handleLineAdd = (values: LineFormValues): LineFormResult => {
-    if (!values.upc && !values.name) {
-      return { success: false, message: "Introduceți un UPC sau denumire" };
-    }
-
-    const percentDiscount = values.valueDiscount
-      ? undefined
-      : values.percentDiscount ?? customer?.discountPercent;
-
-    if (values.upc) {
-      const result = addProductByUpc(values.upc, {
-        qty: values.qty,
-        unitPrice: values.price,
-        percentDiscount,
-        valueDiscount: values.valueDiscount
-      });
-      if (result.success) {
-        setToast(`Produs adăugat: ${values.upc}`);
-        return { success: true, message: "Produs adăugat" };
-      }
-    }
-
-    if (!values.name || values.price === undefined) {
-      return { success: false, message: "Produs negăsit" };
-    }
-
-    const product: Product = {
-      id: nanoid(),
-      upc: values.upc || `CUST-${Date.now()}`,
-      name: values.name,
-      price: values.price
-    };
-
-    addCustomItem({
-      product,
-      qty: values.qty,
-      unitPrice: values.price,
-      percentDiscount,
-      valueDiscount: values.valueDiscount
-    });
-    setToast(`Produs manual: ${values.name}`);
-    return { success: true, message: "Produs manual adăugat" };
-  };
+  useGlobalRequestKeyboard(setKeyboardOpen);
 
   const handleStorno = () => {
     if (!selectedItemId) return;
@@ -371,6 +293,8 @@ export function PosPage() {
               onMoveDown={moveItemDown}
               onProductSearch={handleProductSearch}
               onUpdateItem={handleUpdateItem}
+              keyboardEnabled={keyboardOpen}
+              toggleKeyboard={toggleKeyboard}
             />
           </div>
           <div className="col-span-12 col-span-4 flex flex-col gap-6">
@@ -418,10 +342,15 @@ export function PosPage() {
         </footer>
       </div>
 
-      <Keypad open={keyboardOpen} onClose={closeKeyboard} />
+      {/* Render price check popup first, then Keypad above it if open */}
 
       {priceCheckOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+        <div
+          className={
+            `fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4 transition-all duration-300` +
+            (keyboardOpen ? ' sm:items-end sm:pb-[340px]' : '')
+          }
+        >
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
             <header className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-900">Verifică preț</h2>
@@ -431,6 +360,7 @@ export function PosPage() {
             </header>
             <div className="flex gap-2">
               <input
+                data-request="true"
                 value={priceCheckCode}
                 onChange={(event) => setPriceCheckCode(event.target.value)}
                 className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"
@@ -438,12 +368,18 @@ export function PosPage() {
                 inputMode="decimal"
                 data-keyboard="numeric"
               />
-              <input
-                placeholder="Test input cu data-request"
-                className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"
-                data-request="true"
-                data-keyboard="numeric"
-              />
+              <button
+                type="button"
+                onClick={toggleKeyboard}
+                className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                  keyboardOpen 
+                    ? 'bg-brand-indigo text-white border-brand-indigo' 
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+                title={keyboardOpen ? "Dezactivează tastatura" : "Activează tastatura"}
+              >
+                ⌨️
+              </button>
               <button
                 type="button"
                 onClick={runPriceCheck}
@@ -473,6 +409,9 @@ export function PosPage() {
           </div>
         </div>
       )}
+
+      {/* Keypad always renders above popups */}
+      <Keypad open={keyboardOpen} onClose={closeKeyboard} />
     </main>
   );
 }

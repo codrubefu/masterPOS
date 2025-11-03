@@ -1,4 +1,4 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, useRef, useEffect } from "react";
 import clsx from "clsx";
 import { Customer } from "../../features/cart/types";
 
@@ -8,6 +8,11 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ value, onChange }: ClientCardProps) {
+  // Refs for all inputs
+  const cardIdRef = useRef<HTMLInputElement | null>(null);
+  const lastNameRef = useRef<HTMLInputElement | null>(null);
+  const firstNameRef = useRef<HTMLInputElement | null>(null);
+  const discountPercentRef = useRef<HTMLInputElement | null>(null);
   const customer = value ?? {
     id: "temp",
     type: "pf" as const,
@@ -39,6 +44,32 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     }
   };
 
+  // --- Sync state with native input events (for onscreen keyboard) ---
+  useEffect(() => {
+    const refs = [
+      { ref: cardIdRef, field: "cardId" },
+      { ref: lastNameRef, field: "lastName" },
+      { ref: firstNameRef, field: "firstName" },
+      { ref: discountPercentRef, field: "discountPercent" },
+    ];
+    const handlers = refs.map(({ ref, field }) => {
+      const handler = (e: Event) => {
+        if (e.target instanceof HTMLInputElement) {
+          let value: any = e.target.value;
+          if (field === "discountPercent") value = Number(value) || 0;
+          onChange({ ...customer, [field]: value });
+        }
+      };
+      ref.current?.addEventListener('input', handler);
+      return { ref, handler };
+    });
+    return () => {
+      handlers.forEach(({ ref, handler }) => {
+        ref.current?.removeEventListener('input', handler);
+      });
+    };
+  }, [customer, onChange]);
+
   return (
     <section className="rounded-2xl bg-white shadow-card p-5 flex flex-col gap-4 mb-6">
 
@@ -46,6 +77,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Card ID</span>
           <input
+            ref={cardIdRef}
             type="number"
             inputMode="numeric"
             data-keyboard="numeric"
@@ -66,6 +98,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Nume</span>
           <input
+            ref={lastNameRef}
             value={customer.lastName ?? ""}
             onChange={handleChange("lastName")}
             className={inputClassName}
@@ -76,6 +109,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Prenume / Nr. puncte</span>
           <input
+            ref={firstNameRef}
             value={customer.firstName ?? ""}
             onChange={handleChange("firstName")}
             className={inputClassName}
@@ -86,6 +120,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Reducere %</span>
           <input
+            ref={discountPercentRef}
             type="number"
             min={0}
             max={100}

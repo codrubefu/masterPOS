@@ -83,6 +83,8 @@ export function Keypad({ open, onClose }: KeypadProps) {
     const activeElement = getActiveEditable();
     setTarget(activeElement);
     setPreviewValue(activeElement?.value || "");
+    // Do not reset the input value on close
+    // Only update preview state when opening
   }, [open]);
 
   useEffect(() => {
@@ -218,19 +220,12 @@ export function Keypad({ open, onClose }: KeypadProps) {
   const handleEnter = () => {
     const element = ensureFocus();
     if (!element) return;
-    const form = element.form;
-    if (form) {
-      if (typeof form.requestSubmit === "function") {
-        form.requestSubmit();
-      } else {
-        form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-      }
-    }
+
     onClose();
   };
 
   if (!open) {
-    return null;
+  return null;
   }
 
   const heading = mode === "numeric" ? "Tastatură numerică" : "Tastatură QWERTY";
@@ -245,9 +240,9 @@ export function Keypad({ open, onClose }: KeypadProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-4 sm:items-center sm:justify-end sm:p-10">
+    <div className="fixed inset-x-0 bottom-0 z-50 flex items-end justify-center pointer-events-none">
       <div className={clsx(
-        "rounded-3xl bg-white p-6 shadow-2xl",
+        "pointer-events-auto rounded-3xl bg-white p-6 shadow-2xl mb-4",
         mode === "text" ? "w-full max-w-6xl" : "w-full max-w-md"
       )} data-keypad="true">
         <header className="flex items-start justify-between gap-4">

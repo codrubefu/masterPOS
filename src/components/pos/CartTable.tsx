@@ -1,30 +1,51 @@
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { calculateLineTotals } from "../../features/cart/utils";
 import { CartItem } from "../../features/cart/types";
 import { formatMoney } from "../../lib/money";
-import { useRequestKeyboard } from "../../lib/useRequestKeyboard";
+// import { useRequestKeyboard } from "../../lib/useRequestKeyboard";
 
-interface CartTableProps {
+
+export interface CartTableProps {
   items: CartItem[];
   selectedId?: string;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
-  onProductSearch?: (searchTerm: string) => Promise<void>;
-  onUpdateItem?: (id: string, updates: Partial<CartItem>) => void;
+  onProductSearch: (searchTerm: string) => Promise<void>;
+  onUpdateItem: (id: string, updates: Partial<CartItem>) => void;
+  keyboardEnabled: boolean;
+  toggleKeyboard: () => void;
 }
 
-export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown, onProductSearch, onUpdateItem }: CartTableProps) {
+
+export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown, onProductSearch, onUpdateItem, keyboardEnabled, toggleKeyboard }: CartTableProps) {
+  // Ref for the quantity input in the modal
+  const quantityInputRef = useRef<HTMLInputElement | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CartItem | null>(null);
   const [editQuantity, setEditQuantity] = useState("");
-  const { keyboardEnabled, toggleKeyboard } = useRequestKeyboard();
+
+  // Sync editQuantity state with native input events (for onscreen keyboard)
+  useEffect(() => {
+    if (!editModalOpen) return;
+    const input = quantityInputRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setEditQuantity(e.target.value);
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, [editModalOpen]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && onProductSearch) {
+    if (event.key === 'Enter') {
       event.preventDefault();
       onProductSearch(searchTerm);
       setSearchTerm(""); // Clear the search term after search
@@ -38,7 +59,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
   };
 
   const handleSaveEdit = () => {
-    if (editingItem && editQuantity && onUpdateItem) {
+    if (editingItem && editQuantity) {
       const newQuantity = parseFloat(editQuantity);
       if (newQuantity > 0) {
         onUpdateItem(editingItem.id, { qty: newQuantity });
@@ -55,24 +76,15 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
     setEditQuantity("");
   };
 
-  return (
-    <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col h-full overflow-hidden w-full">
-      <header className="flex items-center justify-between pb-2 border-b border-slate-200 flex-shrink-0">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-gray-500">Bon fiscal</p>
-          <h2 className="text-xl font-semibold text-slate-900">Produse scanate</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <input 
-            type="text"   
-            data-request="true"
-            data-keyboard="numeric"  
-            placeholder="Caută produs..." 
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-indigo focus:border-brand-indigo"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
+  // Helper to render an input with keyboard toggle if data-request is present
+  const renderInputWithKeyboard = (
+    props: React.InputHTMLAttributes<HTMLInputElement> & { showKeyboard?: boolean }
+  ) => {
+    const { showKeyboard, ...inputProps } = props;
+    return (
+      <div className="flex items-center gap-2">
+        <input {...inputProps} />
+        {showKeyboard && (
           <button
             type="button"
             onClick={toggleKeyboard}
@@ -85,7 +97,31 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
           >
             ⌨️
           </button>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col h-full overflow-hidden w-full">
+      <header className="flex items-center justify-between pb-2 border-b border-slate-200 flex-shrink-0">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-gray-500">Bon fiscal</p>
+          <h2 className="text-xl font-semibold text-slate-900">Produse scanate</h2>
         </div>
+        {renderInputWithKeyboard({
+          type: "text",
+          placeholder: "Caută produs...",
+          className: "border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-indigo focus:border-brand-indigo",
+          value: searchTerm,
+          onChange: (e) => setSearchTerm(e.target.value),
+          onKeyDown: handleKeyDown,
+          showKeyboard: true,
+          // @ts-ignore
+          "data-request": "true",
+          // @ts-ignore
+          "data-keyboard": "numeric"
+        })}
       </header>
    
       <div className="mt-4 flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 200px)' }}>
@@ -194,6 +230,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                 Cantitate:
               </label>
               <input
+                ref={quantityInputRef}
                 type="number"
                 min="1"
                 step="1"
