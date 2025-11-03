@@ -34,7 +34,8 @@ export function PosPage() {
     moveItemUp,
     moveItemDown,
     toggleStorno,
-    completePayment
+    completePayment,
+    updateItem
   } = useCartStore((state) => ({
     items: state.items,
     selectedItemId: state.selectedItemId,
@@ -53,7 +54,8 @@ export function PosPage() {
     moveItemUp: state.moveItemUp,
     moveItemDown: state.moveItemDown,
     toggleStorno: state.toggleStorno,
-    completePayment: state.completePayment
+    completePayment: state.completePayment,
+    updateItem: state.updateItem
   }));
 
   const [priceCheckOpen, setPriceCheckOpen] = useState(false);
@@ -217,7 +219,7 @@ export function PosPage() {
       setToast("Căutare produs...");
       
       // API call to search endpoint
-      let id = Math.floor(Math.random() * 10) + 1;
+      let id = Math.floor(Math.random() * 8) + 1;
       const response = await fetch(`http://localhost:8082/api/articles/${id}`, {
         method: 'GET',
         headers: {
@@ -347,6 +349,11 @@ export function PosPage() {
     setToast("Tastatura pe ecran închisă");
   };
 
+  // Wrapper function to convert partial updates to updater function
+  const handleUpdateItem = (id: string, updates: Partial<CartItem>) => {
+    updateItem(id, (item) => ({ ...item, ...updates }));
+  };
+
   return (
     <main className="h-screen bg-slate-100 p-6 lg:p-2 overflow-hidden">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-6 h-full">
@@ -363,6 +370,7 @@ export function PosPage() {
               onMoveUp={moveItemUp}
               onMoveDown={moveItemDown}
               onProductSearch={handleProductSearch}
+              onUpdateItem={handleUpdateItem}
             />
           </div>
           <div className="col-span-12 col-span-4 flex flex-col gap-6">

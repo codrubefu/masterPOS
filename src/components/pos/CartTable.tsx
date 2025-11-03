@@ -13,10 +13,14 @@ interface CartTableProps {
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
   onProductSearch?: (searchTerm: string) => Promise<void>;
+  onUpdateItem?: (id: string, updates: Partial<CartItem>) => void;
 }
 
-export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown, onProductSearch }: CartTableProps) {
+export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown, onProductSearch, onUpdateItem }: CartTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<CartItem | null>(null);
+  const [editQuantity, setEditQuantity] = useState("");
   const { keyboardEnabled, toggleKeyboard } = useRequestKeyboard();
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -27,8 +31,32 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
     }
   };
 
+  const handleEditItem = (item: CartItem) => {
+    setEditingItem(item);
+    setEditQuantity(item.qty.toString());
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingItem && editQuantity && onUpdateItem) {
+      const newQuantity = parseFloat(editQuantity);
+      if (newQuantity > 0) {
+        onUpdateItem(editingItem.id, { qty: newQuantity });
+        setEditModalOpen(false);
+        setEditingItem(null);
+        setEditQuantity("");
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditModalOpen(false);
+    setEditingItem(null);
+    setEditQuantity("");
+  };
+
   return (
-    <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col h-screen overflow-hidden w-full">
+    <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col h-full overflow-hidden w-full">
       <header className="flex items-center justify-between pb-2 border-b border-slate-200 flex-shrink-0">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Bon fiscal</p>
@@ -60,7 +88,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
         </div>
       </header>
    
-      <div className="mt-4 flex-1 overflow-auto min-h-0">
+      <div className="mt-4 flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 200px)' }}>
         <table className="w-full" role="grid">
           <thead className="sticky top-0 z-10 bg-slate-100 text-xs uppercase text-gray-500">
             <tr>
@@ -123,6 +151,10 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                         </button>
                         <button
                           type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleEditItem(item);
+                          }}
                           className={clsx(rowButtonClass, "bg-green-50 text-green-600 border-green-200")}
                         >
                           Modifica
@@ -136,6 +168,63 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
           </tbody>
         </table>
       </div>
+
+      {/* Edit Quantity Modal */}
+      {editModalOpen && editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <header className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-slate-900">Modifică Cantitatea</h2>
+              <button 
+                className="text-gray-500 hover:text-gray-700" 
+                onClick={handleCancelEdit}
+              >
+                ✕
+              </button>
+            </header>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">Produs:</p>
+              <p className="font-semibold text-slate-900">{editingItem.product.name}</p>
+              <p className="text-xs text-gray-500">UPC: {editingItem.product.upc}</p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cantitate:
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={editQuantity}
+                onChange={(e) => setEditQuantity(e.target.value)}
+                className="w-full h-12 rounded-xl border border-gray-200 px-3 text-lg font-semibold focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"
+                placeholder="Introduceți cantitatea"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="flex-1 h-12 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition"
+              >
+                Anulează
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                className="flex-1 h-12 rounded-xl bg-brand-indigo text-white font-semibold hover:bg-indigo-500 transition"
+                disabled={!editQuantity || parseFloat(editQuantity) <= 0}
+              >
+                Salvează
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
