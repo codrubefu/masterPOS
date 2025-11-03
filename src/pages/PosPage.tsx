@@ -12,6 +12,8 @@ import { Keypad } from "../components/pos/Keypad";
 import { POS_SHORTCUTS } from "../lib/shortcuts";
 import { formatMoney } from "../lib/money";
 import { CartItem, PaymentMethod, Product } from "../features/cart/types";
+import { useRequestKeyboard } from "../lib/useRequestKeyboard";
+import { random } from "nanoid";
 
 export function PosPage() {
   const {
@@ -59,6 +61,9 @@ export function PosPage() {
   const [priceCheckResult, setPriceCheckResult] = useState<CartItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  // Initialize global request keyboard functionality
+  useRequestKeyboard();
 
   const selectedItem = useMemo(() => items.find((item) => item.id === selectedItemId), [items, selectedItemId]);
 
@@ -202,6 +207,52 @@ export function PosPage() {
     setToast("Produs demo adăugat în bon");
   };
 
+  const handleProductSearch = async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setToast("Introduceți un termen de căutare");
+      return;
+    }
+
+    try {
+      setToast("Căutare produs...");
+      
+      // API call to search endpoint
+      let id = Math.floor(Math.random() * 10) + 1;
+      const response = await fetch(`http://localhost:8082/api/articles/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const apiResponse = await response.json();
+
+      if (apiResponse.success && apiResponse.data) {
+        // If products found, add the first one to cart
+        const product = apiResponse.data;
+        const result = addProductByUpc(product.upc, {
+          qty: 1,
+          unitPrice: product.price
+        });
+        
+        if (result.success) {
+          setToast(`Produs găsit și adăugat: ${product.name}`);
+        } else {
+          setToast("Produsul nu a putut fi adăugat");
+        }
+      } else {
+        setToast("Niciun produs găsit");
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setToast("Eroare la căutarea produsului");
+    }
+  };
+
   useEffect(() => {
     if (typeof document === "undefined") {
       return;
@@ -215,12 +266,71 @@ export function PosPage() {
         if (target.readOnly || target.disabled || target.type === "hidden") {
           return;
         }
-        setKeyboardOpen(true);
+        
+        // Check if this is a request input
+        const isRequestInput = target.getAttribute('data-request') === 'true';
+        const showOnscreenKeyboard = target.getAttribute('data-show-onscreen-keyboard') === 'true';
+        
+        if (isRequestInput) {
+          // Only show keyboard if it's enabled for request inputs
+          setKeyboardOpen(showOnscreenKeyboard);
+        } else {
+          // Show keyboard for all other inputs (normal behavior)
+          setKeyboardOpen(true);
+        }
       }
     };
     document.addEventListener("focusin", handleFocusIn);
     return () => {
       document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, []);
+
+  // Global keydown handler to auto-focus search input when typing
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't intercept if any input/textarea is already focused
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLInputElement || 
+          activeElement instanceof HTMLTextAreaElement || 
+          activeElement instanceof HTMLSelectElement) {
+        return;
+      }
+      
+      // Don't intercept modifier keys, function keys, etc.
+      if (event.ctrlKey || event.altKey || event.metaKey || 
+          event.key.length > 1 || // Function keys, arrow keys, etc.
+          event.key === ' ') { // Space key
+        return;
+      }
+      
+      // Find the search input
+      const searchInput = document.querySelector('input[data-request="true"][placeholder="Caută produs..."]') as HTMLInputElement;
+      
+      if (searchInput) {
+        // Focus the search input
+        searchInput.focus();
+        
+        // Set the typed character as the value
+        const char = event.key;
+        searchInput.value = char;
+        
+        // Trigger the onChange event
+        const changeEvent = new Event('input', { bubbles: true });
+        searchInput.dispatchEvent(changeEvent);
+        
+        // Prevent the default behavior
+        event.preventDefault();
+      }
+    };
+    
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -252,6 +362,7 @@ export function PosPage() {
               onDelete={removeItem}
               onMoveUp={moveItemUp}
               onMoveDown={moveItemDown}
+              onProductSearch={handleProductSearch}
             />
           </div>
           <div className="col-span-12 col-span-4 flex flex-col gap-6">
@@ -317,6 +428,12 @@ export function PosPage() {
                 className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"
                 placeholder="UPC"
                 inputMode="decimal"
+                data-keyboard="numeric"
+              />
+              <input
+                placeholder="Test input cu data-request"
+                className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"
+                data-request="true"
                 data-keyboard="numeric"
               />
               <button
