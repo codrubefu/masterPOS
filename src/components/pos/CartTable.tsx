@@ -87,46 +87,47 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
           <p className="text-xs uppercase tracking-wide text-gray-500">Bon fiscal</p>
           <h2 className="text-xl font-semibold text-slate-900">Produse scanate</h2>
         </div>
-        <input 
-          type ="text"
-          placeholder= "Caută produs..."
-          className= "border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-indigo focus:border-brand-indigo"
-          value = {searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          onKeyDown={handleKeyDown}
-          inputMode="numeric"
-          data-keyboard="numeric"
-          data-request={iskeyboardEnabled ? "false" : "true"}
-        />
-
-        <label htmlFor="toggleKeyboard" className="flex items-center gap-2 cursor-pointer select-none">
-          <span
-            className={
-              iskeyboardEnabled
-                ? "inline-flex items-center justify-center w-8 h-8 rounded bg-brand-indigo/10 border border-brand-indigo text-brand-indigo shadow"
-                : "inline-flex items-center justify-center w-8 h-8 rounded bg-gray-100 border border-gray-300 text-gray-400"
-            }
-            style={{ transition: 'all 0.2s' }}
-          >
-            {/* Keyboard SVG icon */}
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="5" width="16" height="10" rx="2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.5"/>
-              <rect x="4.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
-              <rect x="7.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
-              <rect x="10.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
-              <rect x="13.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
-              <rect x="6" y="11" width="8" height="2" rx="0.5" fill="currentColor"/>
-            </svg>
-          </span>
+        <div className="flex items-center gap-2 ml-auto">
           <input 
-            type="checkbox"
-            id="toggleKeyboard"
-            checked={iskeyboardEnabled}
-            data-request="true"
-            onChange={() => setIsKeyboardEnabled(!iskeyboardEnabled)}
-            className="sr-only" // hide the native checkbox
+            type ="text"
+            placeholder= "Caută produs..."
+            className= "border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-indigo focus:border-brand-indigo"
+            value = {searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onKeyDown={handleKeyDown}
+            inputMode="numeric"
+            data-keyboard="numeric"
+            data-request={iskeyboardEnabled ? "false" : "true"}
           />
-        </label>
+          <label htmlFor="toggleKeyboard" className="flex items-center gap-2 cursor-pointer select-none">
+            <span
+              className={
+                iskeyboardEnabled
+                  ? "inline-flex items-center justify-center w-8 h-8 rounded bg-brand-indigo/10 border border-brand-indigo text-brand-indigo shadow"
+                  : "inline-flex items-center justify-center w-8 h-8 rounded bg-gray-100 border border-gray-300 text-gray-400"
+              }
+              style={{ transition: 'all 0.2s' }}
+            >
+              {/* Keyboard SVG icon */}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="5" width="16" height="10" rx="2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.5"/>
+                <rect x="4.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+                <rect x="7.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+                <rect x="10.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+                <rect x="13.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+                <rect x="6" y="11" width="8" height="2" rx="0.5" fill="currentColor"/>
+              </svg>
+            </span>
+            <input 
+              type="checkbox"
+              id="toggleKeyboard"
+              checked={iskeyboardEnabled}
+              data-request="true"
+              onChange={() => setIsKeyboardEnabled(!iskeyboardEnabled)}
+              className="sr-only" // hide the native checkbox
+            />
+          </label>
+        </div>
       </header>
    
       <div className="mt-4 flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 200px)' }}>
