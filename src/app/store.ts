@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { CUSTOMERS, DEFAULT_CUSTOMER } from "../mocks/customers";
-import { findProductByUpc } from "../mocks/products";
 import { roundMoney } from "../lib/money";
 import {
   AddProductInput,
@@ -36,7 +35,7 @@ interface PersistedCartState extends CartState {
 interface CartStore extends CartState {
   receipts: Receipt[];
   customerOptions: Customer[];
-  addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => { success: boolean; itemId?: string };
+  addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => Promise<{ success: boolean; itemId?: string }>;
   addCustomItem: (input: AddProductInput) => { itemId: string };
   selectItem: (id?: string) => void;
   updateItem: (id: string, updater: (item: CartItem) => CartItem) => void;
@@ -91,30 +90,41 @@ export const useCartStore = create<CartStore>()(
       ...initialState,
       receipts: [],
       customerOptions: CUSTOMERS,
-      addProductByUpc: (upc, input) => {
-        const product = findProductByUpc(upc);
-        if (!product) {
+      addProductByUpc: async (upc, input) => {
+        // Fetch product from API
+        try {
+          const response = await fetch(`http://localhost:8082/api/articles/${encodeURIComponent(upc)}`);
+          if (!response.ok) return { success: false };
+          const apiResponse = await response.json();
+          if (!apiResponse.success || !apiResponse.data) return { success: false };
+          const product = {
+            id: String(apiResponse.data.id),
+            name: apiResponse.data.name,
+            upc: apiResponse.data.upc,
+            price: apiResponse.data.price,
+          };
+          const qty = input?.qty ?? 1;
+          const overrides = {
+            unitPrice: input?.unitPrice ?? product.price,
+            percentDiscount: input?.percentDiscount,
+            valueDiscount: input?.valueDiscount,
+            storno: input?.storno
+          } satisfies Partial<CartItem>;
+          set((state) => {
+            const items = mergeItems(state.items, product, qty, overrides);
+            const next = recalcState(items, state.cashGiven);
+            const itemId = findLastIdByProduct(items, product);
+            return {
+              ...state,
+              ...next,
+              selectedItemId: itemId,
+              lastAction: `Adăugat ${product.name}`
+            };
+          });
+          return { success: true, itemId: findLastIdByProduct(get().items, product), data: product};
+        } catch (error) {
           return { success: false };
         }
-        const qty = input?.qty ?? 1;
-        const overrides = {
-          unitPrice: input?.unitPrice ?? product.price,
-          percentDiscount: input?.percentDiscount,
-          valueDiscount: input?.valueDiscount,
-          storno: input?.storno
-        } satisfies Partial<CartItem>;
-        set((state) => {
-          const items = mergeItems(state.items, product, qty, overrides);
-          const next = recalcState(items, state.cashGiven);
-          const itemId = findLastIdByProduct(items, product);
-          return {
-            ...state,
-            ...next,
-            selectedItemId: itemId,
-            lastAction: `Adăugat ${product.name}`
-          };
-        });
-        return { success: true, itemId: findLastIdByProduct(get().items, product) };
       },
       addCustomItem: (input) => {
         const item = createCartItem(input);

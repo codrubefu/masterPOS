@@ -156,37 +156,16 @@ export function PosPage() {
     try {
       setToast("Căutare produs...");
 
-      // API call to search endpoint
-      let id = Math.floor(Math.random() * 8) + 1;
-      const response = await fetch(`http://localhost:8082/api/articles/${id}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const apiResponse = await response.json();
-
-      if (apiResponse.success && apiResponse.data) {
+     
         // If products found, add the first one to cart
-        const product = apiResponse.data;
-        const result = addProductByUpc(product.upc, {
-          qty: 1,
-          unitPrice: product.price
-        });
-
+        const result = await addProductByUpc(searchTerm);
+        console.log('Search result:', result);
         if (result.success) {
-          setToast(`Produs găsit și adăugat: ${product.name}`);
+          setToast(`Produs găsit și adăugat: ${result.data.name}`);
         } else {
           setToast("Produsul nu a putut fi adăugat");
         }
-      } else {
-        setToast("Niciun produs găsit");
-      }
+     
     } catch (error) {
       console.error('Search error:', error);
       setToast("Eroare la căutarea produsului");
