@@ -25,6 +25,8 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
 
   // Ref for the quantity input in the modal
   const quantityInputRef = useRef<HTMLInputElement | null>(null);
+  // Ref for the search input
+  const searchTermRef = useRef<HTMLInputElement | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CartItem | null>(null);
@@ -45,6 +47,21 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
       input.removeEventListener('input', handleNativeInput);
     };
   }, [editModalOpen]);
+
+  // Sync searchTerm state with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = searchTermRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setSearchTerm(e.target.value);
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, []);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -90,6 +107,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
         <div className="flex items-center gap-2 ml-auto">
           <input 
             type ="text"
+            ref = {searchTermRef}
             placeholder= "Caută produs..."
             className= "border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-indigo focus:border-brand-indigo"
             value = {searchTerm}
