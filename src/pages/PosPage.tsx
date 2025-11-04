@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { nanoid } from "nanoid/non-secure";
 import { useCartStore } from "../app/store";
@@ -15,6 +15,9 @@ import { useGlobalRequestKeyboard } from "../lib/useGlobalRequestKeyboard";
 import { random } from "nanoid";
 
 export function PosPage() {
+  // Ref for price check input
+  const priceCheckInputRef = useRef<HTMLInputElement | null>(null);
+  
   const {
     items,
     selectedItemId,
@@ -66,6 +69,21 @@ export function PosPage() {
 
   // Initialize global request keyboard functionality
   useGlobalRequestKeyboard(setKeyboardOpen);
+
+  // Sync priceCheckCode state with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = priceCheckInputRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setPriceCheckCode(e.target.value);
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, [priceCheckOpen]); // Re-run when modal opens/closes
 
   const handleStorno = () => {
     if (!selectedItemId) return;
@@ -349,6 +367,7 @@ export function PosPage() {
             </header>
             <div className="flex gap-2">
               <input
+                ref={priceCheckInputRef}
                 value={priceCheckCode}
                 onChange={(e) => setPriceCheckCode(e.target.value)}
                 className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"

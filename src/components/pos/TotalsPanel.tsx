@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { useRef, useEffect } from "react";
 import { formatMoney, parseNumericInput } from "../../lib/money";
 
 interface TotalsPanelProps {
@@ -11,6 +12,24 @@ interface TotalsPanelProps {
 
 export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }: TotalsPanelProps) {
   const inputClass = "h-12 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40";
+  
+  // Ref for cash given input
+  const cashGivenInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Sync cashGiven state with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = cashGivenInputRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        onCashChange(parseNumericInput(e.target.value));
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, [onCashChange]);
 
   return (
     <section className="rounded-2xl bg-white shadow-card p-5 grid grid-cols-2 gap-4 text-sm">
@@ -24,6 +43,7 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
       <label className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Bani</span>
         <input
+          ref={cashGivenInputRef}
           className={clsx(inputClass, "font-semibold text-lg")}
           value={cashGiven}
           inputMode="decimal"
