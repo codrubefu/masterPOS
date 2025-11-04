@@ -2,17 +2,15 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { nanoid } from "nanoid/non-secure";
 import { useCartStore } from "../app/store";
+import {fetchProductInfoByUpc} from "../app/checkPrice";
 import { ClientCard } from "../components/pos/ClientCard";
 import { CartTable } from "../components/pos/CartTable";
 import { ActionsPanel } from "../components/pos/ActionsPanel";
 import { TotalsPanel } from "../components/pos/TotalsPanel";
 import { PaymentButtons } from "../components/pos/PaymentButtons";
-import { PosLineForm, LineFormResult, LineFormValues } from "../components/pos/PosLineForm";
 import { Keypad } from "../components/pos/Keypad";
-import { POS_SHORTCUTS } from "../lib/shortcuts";
 import { formatMoney } from "../lib/money";
 import { CartItem, PaymentMethod, Product } from "../features/cart/types";
-import { useRequestKeyboard } from "../lib/useRequestKeyboard";
 import { useGlobalRequestKeyboard } from "../lib/useGlobalRequestKeyboard";
 import { random } from "nanoid";
 
@@ -110,17 +108,10 @@ export function PosPage() {
     }
     try {
       setToast("Căutare produs...");
-      const response = await fetch(`http://localhost:8082/api/articles/${encodeURIComponent(code)}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const apiResponse = await response.json();
-      if (apiResponse.success && apiResponse.data) {
-        setPriceCheckResult(apiResponse.data);
-        setToast(`Produs găsit: ${apiResponse.data.name}`);
+      const info = await fetchProductInfoByUpc(code);
+      if (info) {
+        setPriceCheckResult(info);
+        setToast(`Produs găsit: ${info.product.name}`);
       } else {
         setPriceCheckResult(null);
         setToast("Niciun produs găsit");
@@ -155,17 +146,13 @@ export function PosPage() {
 
     try {
       setToast("Căutare produs...");
-
-     
-        // If products found, add the first one to cart
-        const result = await addProductByUpc(searchTerm);
-        console.log('Search result:', result);
-        if (result.success) {
-          setToast(`Produs găsit și adăugat: ${result.data.name}`);
-        } else {
-          setToast("Produsul nu a putut fi adăugat");
-        }
-     
+      const result = await addProductByUpc(searchTerm);
+      if (result.success) {
+        const lastItem = items.length > 0 ? items[items.length - 1] : null;
+        setToast(`Produs găsit și adăugat: ${lastItem ? lastItem.product.name : searchTerm}`);
+      } else {
+        setToast("Produsul nu a putut fi adăugat");
+      }
     } catch (error) {
       console.error('Search error:', error);
       setToast("Eroare la căutarea produsului");

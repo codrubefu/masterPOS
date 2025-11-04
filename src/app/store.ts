@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { CUSTOMERS, DEFAULT_CUSTOMER } from "../mocks/customers";
 import { roundMoney } from "../lib/money";
+import { getConfig } from './configLoader';
+
 import {
   AddProductInput,
   computeCartState,
@@ -93,7 +95,9 @@ export const useCartStore = create<CartStore>()(
       addProductByUpc: async (upc, input) => {
         // Fetch product from API
         try {
-          const response = await fetch(`http://localhost:8082/api/articles/${encodeURIComponent(upc)}`);
+          const config = await getConfig();
+                 const baseUrl = config.middleware?.apiBaseUrl || '';
+          const response = await fetch(`${baseUrl}/api/articles/${encodeURIComponent(upc)}`);
           if (!response.ok) return { success: false };
           const apiResponse = await response.json();
           if (!apiResponse.success || !apiResponse.data) return { success: false };
@@ -121,7 +125,7 @@ export const useCartStore = create<CartStore>()(
               lastAction: `Adăugat ${product.name}`
             };
           });
-          return { success: true, itemId: findLastIdByProduct(get().items, product), data: product};
+          return { success: true, itemId: findLastIdByProduct(get().items, product), data: product };
         } catch (error) {
           return { success: false };
         }
