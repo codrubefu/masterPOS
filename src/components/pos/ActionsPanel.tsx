@@ -29,10 +29,6 @@ export function ActionsPanel({
       <button type="button" className={secondaryClass} onClick={onAddPackaging}>
         Bon ambalaje
       </button>
-      <button type="button" className={secondaryClass} onClick={onAddProduct}>
-        Adauga Produs
-      </button>
-
       <button type="button" className={secondaryClass} onClick={onPriceCheck}>
         Verifica Pret
       </button>
