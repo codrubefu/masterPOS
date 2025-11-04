@@ -141,7 +141,10 @@ export function PosPage() {
     setToast("Produs demo adăugat în bon");
   };
 
-  const handleProductSearch = async (searchTerm: string) => {
+  // State to control PaymentButtons enabled
+  const [paymentButtonsEnabled, setPaymentButtonsEnabled] = useState(false);
+
+  const handleProductAdd = async (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setToast("Introduceți un termen de căutare");
       return;
@@ -150,6 +153,7 @@ export function PosPage() {
     try {
       setToast("Căutare produs...");
       const result = await addProductByUpc(searchTerm);
+      setPaymentButtonsEnabled(false); // Disable payment buttons after product add
       if (result.success) {
         const lastItem = items.length > 0 ? items[items.length - 1] : null;
         setToast(`Produs găsit și adăugat: ${lastItem ? lastItem.product.name : searchTerm}`);
@@ -276,7 +280,7 @@ export function PosPage() {
               onDelete={removeItem}
               onMoveUp={moveItemUp}
               onMoveDown={moveItemDown}
-              onProductSearch={handleProductSearch}
+              handleProductAdd={handleProductAdd}
               onUpdateItem={handleUpdateItem}
             />
           </div>
@@ -294,6 +298,8 @@ export function PosPage() {
               onPayMixed={() => handlePayment("mixed")}
               onPayModern={() => handlePayment("modern")}
               onExit={handleExit}
+              enabled={paymentButtonsEnabled}
+              setEnabled={setPaymentButtonsEnabled}
             />
           </div>
 

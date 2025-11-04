@@ -13,12 +13,12 @@ export interface CartTableProps {
   onDelete: (id: string) => void;
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
-  onProductSearch: (searchTerm: string) => Promise<void>;
+  handleProductAdd: (searchTerm: string) => Promise<void>;
   onUpdateItem: (id: string, updates: Partial<CartItem>) => void;
 }
 
 
-export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown, onProductSearch, onUpdateItem }: CartTableProps) {
+export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown, handleProductAdd, onUpdateItem }: CartTableProps) {
   // Local state for on-screen keyboard toggle
   const [iskeyboardEnabled, setIsKeyboardEnabled] = useState(false);
 
@@ -49,7 +49,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      onProductSearch(searchTerm);
+      handleProductAdd(searchTerm);
       setSearchTerm(""); // Clear the search term after search
     }
   };

@@ -15,8 +15,7 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
   return (
     <section className="rounded-2xl bg-white shadow-card p-5 grid grid-cols-2 gap-4 text-sm">
       <div>
-        <p className="text-xs uppercase tracking-wide text-gray-500">Subtotal</p>
-        <p className="text-2xl font-semibold text-slate-900">{formatMoney(subtotal)}</p>
+      
       </div>
       <div>
         <p className="text-xs uppercase tracking-wide text-gray-500">Valoare totală</p>
