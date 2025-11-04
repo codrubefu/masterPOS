@@ -64,6 +64,7 @@ export function PosPage() {
   const [priceCheckResult, setPriceCheckResult] = useState<CartItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [iskeyboardEnabled, setIsKeyboardEnabled] = useState(false);
 
   // Initialize global request keyboard functionality
   useGlobalRequestKeyboard(setKeyboardOpen);
@@ -139,7 +140,7 @@ export function PosPage() {
 
     try {
       setToast("Căutare produs...");
-      
+
       // API call to search endpoint
       let id = Math.floor(Math.random() * 8) + 1;
       const response = await fetch(`http://localhost:8082/api/articles/${id}`, {
@@ -162,7 +163,7 @@ export function PosPage() {
           qty: 1,
           unitPrice: product.price
         });
-        
+
         if (result.success) {
           setToast(`Produs găsit și adăugat: ${product.name}`);
         } else {
@@ -190,11 +191,11 @@ export function PosPage() {
         if (target.readOnly || target.disabled || target.type === "hidden") {
           return;
         }
-        
+
         // Check if this is a request input
         const isRequestInput = target.getAttribute('data-request') === 'true';
         const showOnscreenKeyboard = target.getAttribute('data-show-onscreen-keyboard') === 'true';
-        
+
         if (isRequestInput) {
           // Only show keyboard if it's enabled for request inputs
           setKeyboardOpen(showOnscreenKeyboard);
@@ -215,43 +216,43 @@ export function PosPage() {
     if (typeof document === "undefined") {
       return;
     }
-    
+
     const handleKeyDown = (event: KeyboardEvent) => {
       // Don't intercept if any input/textarea is already focused
       const activeElement = document.activeElement;
-      if (activeElement instanceof HTMLInputElement || 
-          activeElement instanceof HTMLTextAreaElement || 
-          activeElement instanceof HTMLSelectElement) {
+      if (activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement instanceof HTMLSelectElement) {
         return;
       }
-      
+
       // Don't intercept modifier keys, function keys, etc.
-      if (event.ctrlKey || event.altKey || event.metaKey || 
-          event.key.length > 1 || // Function keys, arrow keys, etc.
-          event.key === ' ') { // Space key
+      if (event.ctrlKey || event.altKey || event.metaKey ||
+        event.key.length > 1 || // Function keys, arrow keys, etc.
+        event.key === ' ') { // Space key
         return;
       }
-      
+
       // Find the search input
       const searchInput = document.querySelector('input[data-request="true"][placeholder="Caută produs..."]') as HTMLInputElement;
-      
+
       if (searchInput) {
         // Focus the search input
         searchInput.focus();
-        
+
         // Set the typed character as the value
         const char = event.key;
         searchInput.value = char;
-        
+
         // Trigger the onChange event
         const changeEvent = new Event('input', { bubbles: true });
         searchInput.dispatchEvent(changeEvent);
-        
+
         // Prevent the default behavior
         event.preventDefault();
       }
     };
-    
+
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
@@ -293,8 +294,6 @@ export function PosPage() {
               onMoveDown={moveItemDown}
               onProductSearch={handleProductSearch}
               onUpdateItem={handleUpdateItem}
-              keyboardEnabled={keyboardOpen}
-              toggleKeyboard={toggleKeyboard}
             />
           </div>
           <div className="col-span-12 col-span-4 flex flex-col gap-6">
@@ -360,26 +359,42 @@ export function PosPage() {
             </header>
             <div className="flex gap-2">
               <input
-                data-request="true"
                 value={priceCheckCode}
                 onChange={(event) => setPriceCheckCode(event.target.value)}
                 className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"
                 placeholder="UPC"
-                inputMode="decimal"
+                inputMode="numeric"
                 data-keyboard="numeric"
+                data-request={iskeyboardEnabled ? "false" : "true"}
               />
-              <button
-                type="button"
-                onClick={toggleKeyboard}
-                className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                  keyboardOpen 
-                    ? 'bg-brand-indigo text-white border-brand-indigo' 
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                }`}
-                title={keyboardOpen ? "Dezactivează tastatura" : "Activează tastatura"}
-              >
-                ⌨️
-              </button>
+              <label htmlFor="toggleKeyboard" className="flex items-center gap-2 cursor-pointer select-none">
+                <span
+                  className={
+                    iskeyboardEnabled
+                      ? "inline-flex items-center justify-center w-8 h-8 rounded bg-brand-indigo/10 border border-brand-indigo text-brand-indigo shadow"
+                      : "inline-flex items-center justify-center w-8 h-8 rounded bg-gray-100 border border-gray-300 text-gray-400"
+                  }
+                  style={{ transition: 'all 0.2s' }}
+                >
+                  {/* Keyboard SVG icon */}
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="5" width="16" height="10" rx="2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.5" />
+                    <rect x="4.5" y="8" width="2" height="2" rx="0.5" fill="currentColor" />
+                    <rect x="7.5" y="8" width="2" height="2" rx="0.5" fill="currentColor" />
+                    <rect x="10.5" y="8" width="2" height="2" rx="0.5" fill="currentColor" />
+                    <rect x="13.5" y="8" width="2" height="2" rx="0.5" fill="currentColor" />
+                    <rect x="6" y="11" width="8" height="2" rx="0.5" fill="currentColor" />
+                  </svg>
+                </span>
+                <input
+                  type="checkbox"
+                  id="toggleKeyboard"
+                  checked={iskeyboardEnabled}
+                  data-request="true"
+                  onChange={() => setIsKeyboardEnabled(!iskeyboardEnabled)}
+                  className="sr-only" // hide the native checkbox
+                />
+              </label>
               <button
                 type="button"
                 onClick={runPriceCheck}

@@ -15,12 +15,14 @@ export interface CartTableProps {
   onMoveDown: (id: string) => void;
   onProductSearch: (searchTerm: string) => Promise<void>;
   onUpdateItem: (id: string, updates: Partial<CartItem>) => void;
-  keyboardEnabled: boolean;
-  toggleKeyboard: () => void;
 }
 
 
-export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown, onProductSearch, onUpdateItem, keyboardEnabled, toggleKeyboard }: CartTableProps) {
+export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onMoveDown, onProductSearch, onUpdateItem }: CartTableProps) {
+  // Local state for on-screen keyboard toggle
+  const [iskeyboardEnabled, setIsKeyboardEnabled] = useState(false);
+
+
   // Ref for the quantity input in the modal
   const quantityInputRef = useRef<HTMLInputElement | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -76,31 +78,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
     setEditQuantity("");
   };
 
-  // Helper to render an input with keyboard toggle if data-request is present
-  const renderInputWithKeyboard = (
-    props: React.InputHTMLAttributes<HTMLInputElement> & { showKeyboard?: boolean }
-  ) => {
-    const { showKeyboard, ...inputProps } = props;
-    return (
-      <div className="flex items-center gap-2">
-        <input {...inputProps} />
-        {showKeyboard && (
-          <button
-            type="button"
-            onClick={toggleKeyboard}
-            className={`px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-              keyboardEnabled 
-                ? 'bg-brand-indigo text-white border-brand-indigo' 
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-            }`}
-            title={keyboardEnabled ? "Dezactivează tastatura" : "Activează tastatura"}
-          >
-            ⌨️
-          </button>
-        )}
-      </div>
-    );
-  };
+
 
   return (
     <section className="rounded-2xl bg-white shadow-card p-4 flex flex-col h-full overflow-hidden w-full">
@@ -109,19 +87,46 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
           <p className="text-xs uppercase tracking-wide text-gray-500">Bon fiscal</p>
           <h2 className="text-xl font-semibold text-slate-900">Produse scanate</h2>
         </div>
-        {renderInputWithKeyboard({
-          type: "text",
-          placeholder: "Caută produs...",
-          className: "border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-indigo focus:border-brand-indigo",
-          value: searchTerm,
-          onChange: (e) => setSearchTerm(e.target.value),
-          onKeyDown: handleKeyDown,
-          showKeyboard: true,
-          // @ts-ignore
-          "data-request": "true",
-          // @ts-ignore
-          "data-keyboard": "numeric"
-        })}
+        <input 
+          type ="text"
+          placeholder= "Caută produs..."
+          className= "border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-indigo focus:border-brand-indigo"
+          value = {searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          onKeyDown={handleKeyDown}
+          inputMode="numeric"
+          data-keyboard="numeric"
+          data-request={iskeyboardEnabled ? "false" : "true"}
+        />
+
+        <label htmlFor="toggleKeyboard" className="flex items-center gap-2 cursor-pointer select-none">
+          <span
+            className={
+              iskeyboardEnabled
+                ? "inline-flex items-center justify-center w-8 h-8 rounded bg-brand-indigo/10 border border-brand-indigo text-brand-indigo shadow"
+                : "inline-flex items-center justify-center w-8 h-8 rounded bg-gray-100 border border-gray-300 text-gray-400"
+            }
+            style={{ transition: 'all 0.2s' }}
+          >
+            {/* Keyboard SVG icon */}
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="5" width="16" height="10" rx="2" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="1.5"/>
+              <rect x="4.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+              <rect x="7.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+              <rect x="10.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+              <rect x="13.5" y="8" width="2" height="2" rx="0.5" fill="currentColor"/>
+              <rect x="6" y="11" width="8" height="2" rx="0.5" fill="currentColor"/>
+            </svg>
+          </span>
+          <input 
+            type="checkbox"
+            id="toggleKeyboard"
+            checked={iskeyboardEnabled}
+            data-request="true"
+            onChange={() => setIsKeyboardEnabled(!iskeyboardEnabled)}
+            className="sr-only" // hide the native checkbox
+          />
+        </label>
       </header>
    
       <div className="mt-4 flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 200px)' }}>
