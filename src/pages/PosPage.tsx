@@ -64,7 +64,7 @@ export function PosPage() {
   const [priceCheckResult, setPriceCheckResult] = useState<CartItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
-  const [iskeyboardEnabled, setIsKeyboardEnabled] = useState(false);
+  const [isPriceKeyboardEnabled, setIsPriceKeyboardEnabled] = useState(false);
 
   // Initialize global request keyboard functionality
   useGlobalRequestKeyboard(setKeyboardOpen);
@@ -101,19 +101,34 @@ export function PosPage() {
     setPriceCheckCode("");
   };
 
-  const runPriceCheck = () => {
+  const runPriceCheck = async () => {
     const code = priceCheckCode.trim();
     if (!code) {
       setPriceCheckResult(null);
       setToast("Introduceți un cod valid");
       return;
     }
-    const found = items.find((item) => item.product.upc === code);
-    if (found) {
-      setPriceCheckResult(found);
-    } else {
+    try {
+      setToast("Căutare produs...");
+      const response = await fetch(`http://localhost:8082/api/articles/${encodeURIComponent(code)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const apiResponse = await response.json();
+      if (apiResponse.success && apiResponse.data) {
+        setPriceCheckResult(apiResponse.data);
+        setToast(`Produs găsit: ${apiResponse.data.name}`);
+      } else {
+        setPriceCheckResult(null);
+        setToast("Niciun produs găsit");
+      }
+    } catch (error) {
       setPriceCheckResult(null);
-      setToast("Produsul nu se află în bonul curent");
+      setToast("Eroare la căutarea produsului");
+      console.error('Price check error:', error);
     }
   };
 
@@ -346,8 +361,8 @@ export function PosPage() {
       {priceCheckOpen && (
         <div
           className={
-            `fixed inset-0 z-40 flex items-center justify-center bg-slate-900/50 p-4 transition-all duration-300` +
-            (keyboardOpen ? ' sm:items-end sm:pb-[340px]' : '')
+            `fixed inset-0 z-40 flex justify-center items-start pt-12 bg-slate-900/50 p-4 transition-all duration-300` +
+            (keyboardOpen ? ' sm:pb-[340px]' : '')
           }
         >
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
@@ -360,17 +375,17 @@ export function PosPage() {
             <div className="flex gap-2">
               <input
                 value={priceCheckCode}
-                onChange={(event) => setPriceCheckCode(event.target.value)}
+                onChange={(e) => setPriceCheckCode(e.target.value)}
                 className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40"
                 placeholder="UPC"
                 inputMode="numeric"
                 data-keyboard="numeric"
-                data-request={iskeyboardEnabled ? "false" : "true"}
+                data-request={isPriceKeyboardEnabled ? "false" : "true"}
               />
-              <label htmlFor="toggleKeyboard" className="flex items-center gap-2 cursor-pointer select-none">
+              <label htmlFor="togglePriceKeyboard" className="flex items-center gap-2 cursor-pointer select-none">
                 <span
                   className={
-                    iskeyboardEnabled
+                    isPriceKeyboardEnabled
                       ? "inline-flex items-center justify-center w-8 h-8 rounded bg-brand-indigo/10 border border-brand-indigo text-brand-indigo shadow"
                       : "inline-flex items-center justify-center w-8 h-8 rounded bg-gray-100 border border-gray-300 text-gray-400"
                   }
@@ -388,10 +403,10 @@ export function PosPage() {
                 </span>
                 <input
                   type="checkbox"
-                  id="toggleKeyboard"
-                  checked={iskeyboardEnabled}
+                  id="togglePriceKeyboard"
+                  checked={isPriceKeyboardEnabled}
                   data-request="true"
-                  onChange={() => setIsKeyboardEnabled(!iskeyboardEnabled)}
+                  onChange={() => setIsPriceKeyboardEnabled((prev) => !prev)}
                   className="sr-only" // hide the native checkbox
                 />
               </label>
