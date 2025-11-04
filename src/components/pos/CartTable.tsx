@@ -212,7 +212,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
 
       {/* Edit Quantity Modal */}
       {editModalOpen && editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 bg-slate-900/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <header className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-900">Modifică Cantitatea</h2>

@@ -240,7 +240,7 @@ export function Keypad({ open, onClose }: KeypadProps) {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 flex items-end justify-center pointer-events-none">
+  <div className="fixed inset-x-0 bottom-0 z-50 flex items-end justify-end pointer-events-none" style={{ marginRight: 20 }}>
       <div className={clsx(
         "pointer-events-auto rounded-3xl bg-white p-6 shadow-2xl mb-4",
         mode === "text" ? "w-full max-w-6xl" : "w-full max-w-md"

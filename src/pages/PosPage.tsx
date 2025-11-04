@@ -85,6 +85,9 @@ export function PosPage() {
   };
 
   const handlePayment = (method: PaymentMethod) => {
+    // Print all data from the store
+    const imtems = useCartStore.getState().items;
+    console.log('STORE DATA:', items);
     const receipt = completePayment(method);
     if (receipt) {
       setToast(`Plată ${method} finalizată pentru ${formatMoney(receipt.total)}`);
