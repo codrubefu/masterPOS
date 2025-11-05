@@ -210,12 +210,35 @@ export const useCartStore = create<CartStore>()(
             lastAction: "Actualizat plată numerar"
           };
         }),
-      setCustomer: (customer) =>
+      setCustomer: async (customer) => {
+        // If cardId is present, fetch from API
+        const cardId = customer.cardId?.toString().trim();
+        if (cardId && cardId.length > 0) {
+          try {
+            const config = await getConfig();
+            const baseUrl = config.middleware?.apiBaseUrl || '';
+            const response = await fetch(`${baseUrl}/api/customers/${encodeURIComponent(cardId)}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data && data.success && data.data) {
+                set((state) => ({
+                  ...state,
+                  customer: { ...data.data },
+                  lastAction: `Client ${data.data.lastName ?? data.data.id}`
+                }));
+                return;
+              }
+            }
+          } catch (e) {
+            // ignore fetch errors, fallback to provided customer
+          }
+        }
         set((state) => ({
           ...state,
           customer,
           lastAction: `Client ${customer.lastName ?? customer.id}`
-        })),
+        }));
+      },
       setCasa: (casa) =>
         set((state) => ({
           ...state,

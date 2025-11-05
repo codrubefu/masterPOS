@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useEffect } from "react";
+import { ChangeEvent, useRef, useEffect, useState } from "react";
 import clsx from "clsx";
 import { Customer } from "../../features/cart/types";
 
@@ -21,6 +21,11 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     cardId: "",
     discountPercent: 0
   };
+
+  // Track last fetched cardId to avoid duplicate fetches
+  const [lastFetchedCardId, setLastFetchedCardId] = useState<string>("");
+
+
 
   const handleChange = (field: keyof Customer) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const value =
@@ -90,10 +95,15 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Tip client</span>
-          <select value={customer.type} onChange={handleChange("type")} className={inputClassName}>
-            <option value="pf">Persoană fizică</option>
-            <option value="pj">Persoană juridică</option>
-          </select>
+          <input
+            onChange={handleChange("type")}
+            disabled
+            readOnly={true}
+            ref={lastNameRef}
+            type="text"
+            value={customer.type === "pf" ? "Persoană fizică" : "Persoană juridică"}
+            className={clsx(inputClassName, "bg-gray-50")}
+          />  
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Nume</span>
@@ -104,6 +114,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             className={inputClassName}
             data-keyboard="text"
             placeholder="Nume client"
+            disabled
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -115,6 +126,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             className={inputClassName}
             data-keyboard="text"
             placeholder="Prenume"
+            disabled
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -128,6 +140,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             onChange={handleChange("discountPercent")}
             className={clsx(inputClassName, "[appearance:textfield]")}
             data-keyboard="numeric"
+            disabled
           />
         </label>
         <div className="flex flex-col gap-1">
