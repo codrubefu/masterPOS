@@ -1,5 +1,6 @@
 {
     "middleware": {
         "apiBaseUrl": "http://localhost:8082"
-    }
+    },
+    "casa": [1, 2, 3, 4, 5]
 }

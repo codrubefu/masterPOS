@@ -9,6 +9,7 @@ import { ActionsPanel } from "../components/pos/ActionsPanel";
 import { TotalsPanel } from "../components/pos/TotalsPanel";
 import { PaymentButtons } from "../components/pos/PaymentButtons";
 import { Keypad } from "../components/pos/Keypad";
+import { SettingsModal } from "../components/pos/SettingsModal";
 import { formatMoney } from "../lib/money";
 import { CartItem, PaymentMethod, Product } from "../features/cart/types";
 import { useGlobalRequestKeyboard } from "../lib/useGlobalRequestKeyboard";
@@ -17,6 +18,9 @@ import { random } from "nanoid";
 export function PosPage() {
   // Ref for price check input
   const priceCheckInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // Settings modal state
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
   const {
     items,
@@ -27,6 +31,7 @@ export function PosPage() {
     cashGiven,
     customer,
     lastAction,
+    casa,
     setCashGiven,
     setCustomer,
     addProductByUpc,
@@ -47,6 +52,7 @@ export function PosPage() {
     cashGiven: state.cashGiven,
     customer: state.customer,
     lastAction: state.lastAction,
+    casa: state.casa,
     setCashGiven: state.setCashGiven,
     setCustomer: state.setCustomer,
     addProductByUpc: state.addProductByUpc,
@@ -64,6 +70,8 @@ export function PosPage() {
   const [priceCheckCode, setPriceCheckCode] = useState("");
   const [priceCheckResult, setPriceCheckResult] = useState<CartItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [cartInfo, setCartInfo] = useState<any>(null);
+  const [cartError, setCartError] = useState<any>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [isPriceKeyboardEnabled, setIsPriceKeyboardEnabled] = useState(false);
 
@@ -169,18 +177,21 @@ export function PosPage() {
     }
 
     try {
-      setToast("Căutare produs...");
+      setCartInfo("Căutare produs...");
       const result = await addProductByUpc(searchTerm);
       setPaymentButtonsEnabled(false); // Disable payment buttons after product add
       if (result.success) {
         const lastItem = items.length > 0 ? items[items.length - 1] : null;
-        setToast(`Produs găsit și adăugat: ${lastItem ? lastItem.product.name : searchTerm}`);
+        setCartInfo(`Produs găsit și adăugat: ${lastItem ? lastItem.product.name : searchTerm}`);
+        setCartError(null);
       } else {
-        setToast("Produsul nu a putut fi adăugat");
+        setCartInfo("Produsul nu a putut fi adăugat");
+        setCartError(true);
       }
     } catch (error) {
       console.error('Search error:', error);
-      setToast("Eroare la căutarea produsului");
+      setCartInfo("Eroare la căutarea produsului");
+      setCartError(true);
     }
   };
 
@@ -287,7 +298,24 @@ export function PosPage() {
     <main className="h-screen bg-slate-100 p-6 lg:p-2 overflow-hidden">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-6 h-full">
         <header className="flex items-center justify-between flex-shrink-0">
-          <p className="text-xs uppercase tracking-wide text-gray-500">masterPOS</p>
+          <div className="flex items-center gap-4">
+            <p className="text-xs uppercase tracking-wide text-gray-500">masterPOS</p>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>Casa:</span>
+              <span className="font-semibold text-blue-600">{casa}</span>
+            </div>
+            <div className={`flex items-center gap-4 text-sm ${cartError ? 'text-red-600' : 'text-green-600'}`}>{cartInfo}</div>
+          </div>
+          <button
+            onClick={() => setIsSettingsModalOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Setări
+          </button>
         </header>
         <div className="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
           <div className="col-span-12 col-span-5 flex gap-6">
@@ -436,6 +464,12 @@ export function PosPage() {
 
       {/* Keypad always renders above popups */}
       <Keypad open={keyboardOpen} onClose={closeKeyboard} />
+      
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsModalOpen} 
+        onClose={() => setIsSettingsModalOpen(false)} 
+      />
     </main>
   );
 }

@@ -221,6 +221,15 @@ export function Keypad({ open, onClose }: KeypadProps) {
     const element = ensureFocus();
     if (!element) return;
 
+    // Simulate Enter key press
+    const event = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      code: 'Enter',
+      bubbles: true,
+      cancelable: true,
+    });
+    element.dispatchEvent(event);
+
     onClose();
   };
 

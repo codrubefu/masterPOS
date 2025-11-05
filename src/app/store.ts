@@ -37,6 +37,7 @@ interface PersistedCartState extends CartState {
 interface CartStore extends CartState {
   receipts: Receipt[];
   customerOptions: Customer[];
+  casa: number; // Casa (register) number: 1, 2, 3, or 4
   addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => Promise<{ success: boolean; itemId?: string }>;
   addCustomItem: (input: AddProductInput) => { itemId: string };
   selectItem: (id?: string) => void;
@@ -48,6 +49,7 @@ interface CartStore extends CartState {
   setCashGiven: (value: number) => void;
   setCustomer: (customer: Customer) => void;
   setPaymentMethod: (method?: PaymentMethod) => void;
+  setCasa: (casa: number) => void;
   completePayment: (method: PaymentMethod) => Receipt | undefined;
   resetCart: () => void;
 }
@@ -92,6 +94,7 @@ export const useCartStore = create<CartStore>()(
       ...initialState,
       receipts: [],
       customerOptions: CUSTOMERS,
+      casa: 1, // Default casa is 1
       addProductByUpc: async (upc, input) => {
         // Fetch product from API
         try {
@@ -212,6 +215,12 @@ export const useCartStore = create<CartStore>()(
           ...state,
           customer,
           lastAction: `Client ${customer.lastName ?? customer.id}`
+        })),
+      setCasa: (casa) =>
+        set((state) => ({
+          ...state,
+          casa,
+          lastAction: `Casa setată la ${casa}`
         })),
       setPaymentMethod: (method) =>
         set((state) => ({
