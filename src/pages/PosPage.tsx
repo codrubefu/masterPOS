@@ -11,9 +11,10 @@ import { PaymentButtons } from "../components/pos/PaymentButtons";
 import { Keypad } from "../components/pos/Keypad";
 import { SettingsModal } from "../components/pos/SettingsModal";
 import { formatMoney } from "../lib/money";
-import { CartItem, PaymentMethod, Product } from "../features/cart/types";
+import { CartItem, PaymentMethod, Product, Customer } from "../features/cart/types";
 import { useGlobalRequestKeyboard } from "../lib/useGlobalRequestKeyboard";
 import { random } from "nanoid";
+import { a } from "vitest/dist/suite-dWqIFb_-.js";
 
 export function PosPage() {
   // Ref for price check input
@@ -195,6 +196,24 @@ export function PosPage() {
     }
   };
 
+  const handleClientUpdate = async (updatedCustomer: Customer) => {
+    if (!updatedCustomer) {
+      setToast("Date client invalide");
+      return;
+    }
+    try {
+      setCartInfo("Actualizare client...");
+      // setCustomer handles the API call internally
+      await setCustomer(updatedCustomer);
+      setToast("Client actualizat cu succes");
+    } catch (error) {
+      console.error('Client update error:', error);
+      setCartInfo("Eroare la actualizarea clientului");
+      setCartError(true);
+      setToast("Eroare la actualizarea clientului");
+    }
+  };
+
   useEffect(() => {
     if (typeof document === "undefined") {
       return;
@@ -352,7 +371,7 @@ export function PosPage() {
 
           <div className="col-span-12 col-span-3 flex gap-6">
             <div className="w-full max-w-xs">
-              <ClientCard value={customer} onChange={setCustomer} />
+              <ClientCard value={customer} onChange={handleClientUpdate} />
               <ActionsPanel
                 onMoveUp={() => selectedItemId && moveItemUp(selectedItemId)}
                 onMoveDown={() => selectedItemId && moveItemDown(selectedItemId)}

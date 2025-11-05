@@ -211,13 +211,13 @@ export const useCartStore = create<CartStore>()(
           };
         }),
       setCustomer: async (customer) => {
-        // If cardId is present, fetch from API
-        const cardId = customer.cardId?.toString().trim();
-        if (cardId && cardId.length > 0) {
+        // If id is present, fetch from API
+        const id = customer.id?.toString().trim();
+        if (id && id.length > 0) {
           try {
             const config = await getConfig();
             const baseUrl = config.middleware?.apiBaseUrl || '';
-            const response = await fetch(`${baseUrl}/api/customers/${encodeURIComponent(cardId)}`);
+            const response = await fetch(`${baseUrl}/api/customers/${encodeURIComponent(id)}`);
             if (response.ok) {
               const data = await response.json();
               if (data && data.success && data.data) {

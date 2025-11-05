@@ -1,18 +1,26 @@
-import { ChangeEvent, useRef, useEffect, useState } from "react";
+import { ChangeEvent, useRef, useEffect } from "react";
 import clsx from "clsx";
 import { Customer } from "../../features/cart/types";
 
 interface ClientCardProps {
   value?: Customer;
-  onChange: (customer: Customer) => void;
+  /**
+   * Handler for customer updates. Should be an async function that:
+   * 1. Shows loading state
+   * 2. Calls store's setCustomer (which handles API call)
+   * 3. Shows success/error feedback
+   * Similar pattern to handleProductAdd in CartTable
+   */
+  onChange?: (customer: Customer) => void;
 }
 
 export function ClientCard({ value, onChange }: ClientCardProps) {
   // Refs for all inputs
-  const cardIdRef = useRef<HTMLInputElement | null>(null);
+  const idRef = useRef<HTMLInputElement | null>(null);
   const lastNameRef = useRef<HTMLInputElement | null>(null);
   const firstNameRef = useRef<HTMLInputElement | null>(null);
   const discountPercentRef = useRef<HTMLInputElement | null>(null);
+  
   const customer = value ?? {
     id: "temp",
     type: "pf" as const,
@@ -22,23 +30,15 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     discountPercent: 0
   };
 
-  // Track last fetched cardId to avoid duplicate fetches
-  const [lastFetchedCardId, setLastFetchedCardId] = useState<string>("");
-
-
-
   const handleChange = (field: keyof Customer) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value =
-      field === "discountPercent"
-        ? Number(event.target.value) || 0
-        : field === "type"
-          ? (event.target.value as Customer["type"])
-          : event.target.value;
-    const next: Customer = {
-      ...customer,
-      [field]: value as Customer[keyof Customer]
-    };
-    onChange(next);
+    if (!onChange) return;
+    
+    let fieldValue: any = event.target.value;
+    if (field === "discountPercent") {
+      fieldValue = Number(fieldValue) || 0;
+    }
+    
+    onChange({ ...customer, [field]: fieldValue });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -51,12 +51,15 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
 
   // --- Sync state with native input events (for onscreen keyboard) ---
   useEffect(() => {
+    if (!onChange) return;
+    
     const refs = [
-      { ref: cardIdRef, field: "cardId" },
-      { ref: lastNameRef, field: "lastName" },
-      { ref: firstNameRef, field: "firstName" },
-      { ref: discountPercentRef, field: "discountPercent" },
+      { ref: idRef, field: "id" as keyof Customer },
+      { ref: lastNameRef, field: "lastName" as keyof Customer },
+      { ref: firstNameRef, field: "firstName" as keyof Customer },
+      { ref: discountPercentRef, field: "discountPercent" as keyof Customer },
     ];
+    
     const handlers = refs.map(({ ref, field }) => {
       const handler = (e: Event) => {
         if (e.target instanceof HTMLInputElement) {
@@ -68,6 +71,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
       ref.current?.addEventListener('input', handler);
       return { ref, handler };
     });
+    
     return () => {
       handlers.forEach(({ ref, handler }) => {
         ref.current?.removeEventListener('input', handler);
@@ -82,12 +86,12 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Card ID</span>
           <input
-            ref={cardIdRef}
+            ref={idRef}
             type="number"
             inputMode="numeric"
             data-keyboard="numeric"
-            value={customer.cardId ?? ""}
-            onChange={handleChange("cardId")}
+            value={customer.id ?? ""}
+            onChange={handleChange("id")}
             onKeyDown={handleKeyDown}
             className={inputClassName}
             placeholder="Introduceți card"
@@ -118,7 +122,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-gray-500">Prenume / Nr. puncte</span>
+          <span className="text-xs uppercase tracking-wide text-gray-500">Prenume</span>
           <input
             ref={firstNameRef}
             value={customer.firstName ?? ""}
