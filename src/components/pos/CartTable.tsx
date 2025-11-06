@@ -187,6 +187,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                         <span className="font-semibold text-slate-900">{item.product.name}</span>
                         <span className="text-xs text-gray-500">UPC: {item.product.upc}</span>
                         {item.storno && <span className="mt-1 text-xs font-semibold text-red-500">STORNO</span>}
+                        {item.product.sgr && <span className="mt-1 text-xs font-semibold text-green-600">🔄 Bon ambalaj</span>}
                       </div>
                     </td>
                     <td className="px-3 py-3 text-right tabular-nums">{item.qty.toFixed(2)}</td>

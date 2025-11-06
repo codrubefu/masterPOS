@@ -15,6 +15,7 @@ export interface Product {
   name: string;
   price: number;
   vatRate?: number;
+  sgr?: boolean;
 }
 
 export interface CartItem {
@@ -25,6 +26,7 @@ export interface CartItem {
   percentDiscount?: number;
   valueDiscount?: number;
   storno?: boolean;
+  sgr?: boolean;
 }
 
 export interface CartState {

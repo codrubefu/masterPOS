@@ -100,10 +100,8 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Tip client</span>
           <input
-            onChange={handleChange("type")}
             disabled
-            readOnly={true}
-            ref={lastNameRef}
+            readOnly
             type="text"
             value={customer.type === "pf" ? "Persoană fizică" : "Persoană juridică"}
             className={clsx(inputClassName, "bg-gray-50")}
@@ -114,8 +112,8 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
           <input
             ref={lastNameRef}
             value={customer.lastName ?? ""}
-            onChange={handleChange("lastName")}
-            className={inputClassName}
+            readOnly
+            className={clsx(inputClassName, "bg-gray-50")}
             data-keyboard="text"
             placeholder="Nume client"
             disabled
@@ -126,8 +124,8 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
           <input
             ref={firstNameRef}
             value={customer.firstName ?? ""}
-            onChange={handleChange("firstName")}
-            className={inputClassName}
+            readOnly
+            className={clsx(inputClassName, "bg-gray-50")}
             data-keyboard="text"
             placeholder="Prenume"
             disabled
@@ -141,8 +139,8 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             min={0}
             max={100}
             value={customer.discountPercent ?? 0}
-            onChange={handleChange("discountPercent")}
-            className={clsx(inputClassName, "[appearance:textfield]")}
+            readOnly
+            className={clsx(inputClassName, "bg-gray-50", "[appearance:textfield]")}
             data-keyboard="numeric"
             disabled
           />

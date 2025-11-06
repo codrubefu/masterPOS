@@ -109,6 +109,7 @@ export const useCartStore = create<CartStore>()(
             name: apiResponse.data.name,
             upc: apiResponse.data.upc,
             price: apiResponse.data.price,
+            sgr: apiResponse.data.sgr,
           };
           const qty = input?.qty ?? 1;
           const overrides = {
@@ -118,7 +119,62 @@ export const useCartStore = create<CartStore>()(
             storno: input?.storno
           } satisfies Partial<CartItem>;
           set((state) => {
-            const items = mergeItems(state.items, product, qty, overrides);
+            // Remove existing SGR tax items temporarily
+            let items = state.items.filter(item => item.product.id !== 'sgr-tax');
+            
+            // Add the new product
+            items = mergeItems(items, product, qty, overrides);
+            
+            // If product has SGR, calculate total SGR quantity needed
+            if (product.sgr) {
+              // Calculate total SGR quantity from all SGR products
+              let totalSgrQty = 0;
+              for (const item of items) {
+                if (item.product.sgr && !item.storno) {
+                  totalSgrQty += item.qty;
+                }
+              }
+              
+              // Add SGR tax item at the end
+              if (totalSgrQty > 0) {
+                const sgrProduct: Product = {
+                  id: 'sgr-tax',
+                  upc: 'SGR-TAX',
+                  name: 'Taxa SGR',
+                  price: 0.5
+                };
+                const sgrItem = createCartItem({ 
+                  product: sgrProduct, 
+                  qty: totalSgrQty, 
+                  unitPrice: 0.5 
+                });
+                items = [...items, sgrItem];
+              }
+            } else {
+              // Re-add SGR tax if there are SGR products
+              let totalSgrQty = 0;
+              for (const item of items) {
+                if (item.product.sgr && !item.storno) {
+                  totalSgrQty += item.qty;
+                }
+              }
+              
+              if (totalSgrQty > 0) {
+                const sgrProduct: Product = {
+                  id: 'sgr-tax',
+                  upc: 'SGR-TAX',
+                  name: 'Taxa SGR',
+                  price: 0.5
+                };
+                const sgrItem = createCartItem({ 
+                  product: sgrProduct, 
+                  qty: totalSgrQty, 
+                  unitPrice: 0.5 
+                });
+                items = [...items, sgrItem];
+              }
+            }
+            
             const next = recalcState(items, state.cashGiven);
             const itemId = findLastIdByProduct(items, product);
             return {
@@ -136,7 +192,36 @@ export const useCartStore = create<CartStore>()(
       addCustomItem: (input) => {
         const item = createCartItem(input);
         set((state) => {
-          const items = [...state.items, item];
+          // Remove existing SGR tax items temporarily
+          let items = state.items.filter(i => i.product.id !== 'sgr-tax');
+          
+          // Add the new item
+          items = [...items, item];
+          
+          // Calculate total SGR quantity from all SGR products
+          let totalSgrQty = 0;
+          for (const i of items) {
+            if (i.product.sgr && !i.storno) {
+              totalSgrQty += i.qty;
+            }
+          }
+          
+          // Add SGR tax item at the end if needed
+          if (totalSgrQty > 0) {
+            const sgrProduct: Product = {
+              id: 'sgr-tax',
+              upc: 'SGR-TAX',
+              name: 'Taxa SGR',
+              price: 0.5
+            };
+            const sgrItem = createCartItem({ 
+              product: sgrProduct, 
+              qty: totalSgrQty, 
+              unitPrice: 0.5 
+            });
+            items = [...items, sgrItem];
+          }
+          
           const next = recalcState(items, state.cashGiven);
           return {
             ...state,
@@ -155,7 +240,36 @@ export const useCartStore = create<CartStore>()(
         })),
       updateItem: (id, updater) =>
         set((state) => {
-          const items = updateCartItem(state.items, id, updater);
+          // Remove existing SGR tax items temporarily
+          let items = state.items.filter(i => i.product.id !== 'sgr-tax');
+          
+          // Update the item
+          items = updateCartItem(items, id, updater);
+          
+          // Calculate total SGR quantity from all SGR products
+          let totalSgrQty = 0;
+          for (const i of items) {
+            if (i.product.sgr && !i.storno) {
+              totalSgrQty += i.qty;
+            }
+          }
+          
+          // Add SGR tax item at the end if needed
+          if (totalSgrQty > 0) {
+            const sgrProduct: Product = {
+              id: 'sgr-tax',
+              upc: 'SGR-TAX',
+              name: 'Taxa SGR',
+              price: 0.5
+            };
+            const sgrItem = createCartItem({ 
+              product: sgrProduct, 
+              qty: totalSgrQty, 
+              unitPrice: 0.5 
+            });
+            items = [...items, sgrItem];
+          }
+          
           const next = recalcState(items, state.cashGiven);
           return {
             ...state,
@@ -165,7 +279,36 @@ export const useCartStore = create<CartStore>()(
         }),
       removeItem: (id) =>
         set((state) => {
-          const items = removeCartItem(state.items, id);
+          // Remove the item
+          let items = removeCartItem(state.items, id);
+          
+          // Remove existing SGR tax items
+          items = items.filter(i => i.product.id !== 'sgr-tax');
+          
+          // Calculate total SGR quantity from all SGR products
+          let totalSgrQty = 0;
+          for (const i of items) {
+            if (i.product.sgr && !i.storno) {
+              totalSgrQty += i.qty;
+            }
+          }
+          
+          // Add SGR tax item at the end if needed
+          if (totalSgrQty > 0) {
+            const sgrProduct: Product = {
+              id: 'sgr-tax',
+              upc: 'SGR-TAX',
+              name: 'Taxa SGR',
+              price: 0.5
+            };
+            const sgrItem = createCartItem({ 
+              product: sgrProduct, 
+              qty: totalSgrQty, 
+              unitPrice: 0.5 
+            });
+            items = [...items, sgrItem];
+          }
+          
           const next = recalcState(items, state.cashGiven);
           return {
             ...state,
@@ -175,23 +318,64 @@ export const useCartStore = create<CartStore>()(
           };
         }),
       moveItemUp: (id) =>
-        set((state) => ({
-          ...state,
-          items: moveItem(state.items, id, "up"),
-          lastAction: "Mutat produs"
-        })),
+        set((state) => {
+          // Don't allow moving SGR tax item
+          const item = state.items.find(i => i.id === id);
+          if (item?.product.id === 'sgr-tax') return state;
+          
+          return {
+            ...state,
+            items: moveItem(state.items, id, "up"),
+            lastAction: "Mutat produs"
+          };
+        }),
       moveItemDown: (id) =>
-        set((state) => ({
-          ...state,
-          items: moveItem(state.items, id, "down"),
-          lastAction: "Mutat produs"
-        })),
+        set((state) => {
+          // Don't allow moving SGR tax item
+          const item = state.items.find(i => i.id === id);
+          if (item?.product.id === 'sgr-tax') return state;
+          
+          return {
+            ...state,
+            items: moveItem(state.items, id, "down"),
+            lastAction: "Mutat produs"
+          };
+        }),
       toggleStorno: (id) =>
         set((state) => {
-          const items = updateCartItem(state.items, id, (item) => ({
+          // Remove existing SGR tax items temporarily
+          let items = state.items.filter(i => i.product.id !== 'sgr-tax');
+          
+          // Toggle storno on the item
+          items = updateCartItem(items, id, (item) => ({
             ...item,
             storno: !item.storno
           }));
+          
+          // Calculate total SGR quantity from all SGR products (excluding storno)
+          let totalSgrQty = 0;
+          for (const i of items) {
+            if (i.product.sgr && !i.storno) {
+              totalSgrQty += i.qty;
+            }
+          }
+          
+          // Add SGR tax item at the end if needed
+          if (totalSgrQty > 0) {
+            const sgrProduct: Product = {
+              id: 'sgr-tax',
+              upc: 'SGR-TAX',
+              name: 'Taxa SGR',
+              price: 0.5
+            };
+            const sgrItem = createCartItem({ 
+              product: sgrProduct, 
+              qty: totalSgrQty, 
+              unitPrice: 0.5 
+            });
+            items = [...items, sgrItem];
+          }
+          
           const next = recalcState(items, state.cashGiven);
           return {
             ...state,

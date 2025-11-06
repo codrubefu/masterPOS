@@ -102,8 +102,8 @@ export function PosPage() {
 
   const handlePackaging = () => {
     const product: Product = {
-      id: nanoid(),
-      upc: `AMB-${Date.now()}`,
+      id: 'ambalaj',
+      upc: `AMB-ambalaj`,
       name: "Bon ambalaje",
       price: 0.5
     };
@@ -202,7 +202,7 @@ export function PosPage() {
       return;
     }
     try {
-      setCartInfo("Actualizare client...");
+      setToast("Actualizare client...");
       // setCustomer handles the API call internally
       await setCustomer(updatedCustomer);
       setToast("Client actualizat cu succes");
