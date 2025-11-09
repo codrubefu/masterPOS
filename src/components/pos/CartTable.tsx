@@ -194,7 +194,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                     <td className="px-3 py-3 text-right tabular-nums">
                       {item.valueDiscount ? "-" : `${item.percentDiscount ?? 0}%`}
                     </td>
-                    <td className="px-3 py-3 text-right tabular-nums">{item.unitPrice.toFixed(2)}</td>
+                    <td className="px-3 py-3 text-right tabular-nums">{formatMoney(item.unitPrice)}</td>
                     <td className="px-3 py-3 text-right tabular-nums font-semibold">
                       {formatMoney(totals.total)}
                     </td>

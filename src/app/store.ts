@@ -298,52 +298,70 @@ export const useCartStore = create<CartStore>()(
               return { success: false, error: errorText || `Server error: ${response.status}` };
             }
           }
+          
+          // Get the updated array from server response
+          const apiResponse = await response.json();
+          if (!apiResponse.success || !apiResponse.data) {
+            return { success: false, error: apiResponse.message || 'Invalid response from server' };
+          }
+          
+          // Update local state with the server response
+          return new Promise<{ success: boolean; error?: string; data?: any }>((resolve) => {
+            set((state) => {
+              // Remove existing SGR tax items temporarily
+              let items = state.items.filter(i => i.product.id !== 'sgr-tax');
+              
+              // Update the item with server data
+              items = updateCartItem(items, id, (item) => ({
+                ...item,
+                product: {
+                  ...item.product,
+                  name: apiResponse.data.name || item.product.name,
+                  price: apiResponse.data.price ?? item.product.price,
+                },
+                qty: apiResponse.data.qty ?? item.qty,
+                unitPrice: apiResponse.data.price ?? item.unitPrice,
+                percentDiscount: apiResponse.data.percentDiscount ?? item.percentDiscount,
+                valueDiscount: apiResponse.data.valueDiscount ?? item.valueDiscount,
+                storno: apiResponse.data.storno ?? item.storno
+              }));
+              
+              // Calculate total SGR quantity from all SGR products
+              let totalSgrQty = 0;
+              for (const i of items) {
+                if (i.product.sgr && !i.storno) {
+                  totalSgrQty += i.qty;
+                }
+              }
+              
+              // Add SGR tax item at the end if needed
+              if (totalSgrQty > 0) {
+                const sgrProduct: Product = {
+                  id: 'sgr-tax',
+                  upc: 'SGR-TAX',
+                  name: 'Taxa SGR',
+                  price: 0.5
+                };
+                const sgrItem = createCartItem({ 
+                  product: sgrProduct, 
+                  qty: totalSgrQty, 
+                  unitPrice: 0.5 
+                });
+                items = [...items, sgrItem];
+              }
+              
+              const next = recalcState(items, state.cashGiven);
+              resolve({ success: true, data: apiResponse.data });
+              return {
+                ...state,
+                ...next,
+                lastAction: `Actualizat linia`
+              };
+            });
+          });
         } catch (error) {
           return { success: false, error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` };
         }
-        
-        // Update local state
-        return new Promise<{ success: boolean; error?: string }>((resolve) => {
-          set((state) => {
-            // Remove existing SGR tax items temporarily
-            let items = state.items.filter(i => i.product.id !== 'sgr-tax');
-            
-            // Update the item
-            items = updateCartItem(items, id, updater);
-            
-            // Calculate total SGR quantity from all SGR products
-            let totalSgrQty = 0;
-            for (const i of items) {
-              if (i.product.sgr && !i.storno) {
-                totalSgrQty += i.qty;
-              }
-            }
-            
-            // Add SGR tax item at the end if needed
-            if (totalSgrQty > 0) {
-              const sgrProduct: Product = {
-                id: 'sgr-tax',
-                upc: 'SGR-TAX',
-                name: 'Taxa SGR',
-                price: 0.5
-              };
-              const sgrItem = createCartItem({ 
-                product: sgrProduct, 
-                qty: totalSgrQty, 
-                unitPrice: 0.5 
-              });
-              items = [...items, sgrItem];
-            }
-            
-            const next = recalcState(items, state.cashGiven);
-            resolve({ success: true });
-            return {
-              ...state,
-              ...next,
-              lastAction: `Actualizat linia`
-            };
-          });
-        });
       },
       removeItem: async (id) => {
         // Get the current state
