@@ -311,20 +311,23 @@ export const useCartStore = create<CartStore>()(
               // Remove existing SGR tax items temporarily
               let items = state.items.filter(i => i.product.id !== 'sgr-tax');
               
-              // Update the item with server data
-              items = updateCartItem(items, id, (item) => ({
-                ...item,
-                product: {
-                  ...item.product,
-                  name: apiResponse.data.name || item.product.name,
-                  price: apiResponse.data.price ?? item.product.price,
-                },
-                qty: apiResponse.data.qty ?? item.qty,
-                unitPrice: apiResponse.data.price ?? item.unitPrice,
-                percentDiscount: apiResponse.data.percentDiscount ?? item.percentDiscount,
-                valueDiscount: apiResponse.data.valueDiscount ?? item.valueDiscount,
-                storno: apiResponse.data.storno ?? item.storno
-              }));
+              // Update the item with server data - use ?? with original updatedItem values
+              items = updateCartItem(items, id, (item) => {
+                const serverData = apiResponse.data;
+                return {
+                  ...item,
+                  product: {
+                    ...item.product,
+                    name: serverData.name ?? item.product.name,
+                    price: serverData.price ?? item.product.price,
+                  },
+                  qty: serverData.qty ?? updatedItem.qty,
+                  unitPrice: serverData.price ?? updatedItem.unitPrice,
+                  percentDiscount: serverData.percentDiscount ?? updatedItem.percentDiscount,
+                  valueDiscount: serverData.valueDiscount ?? updatedItem.valueDiscount,
+                  storno: serverData.storno ?? updatedItem.storno
+                };
+              });
               
               // Calculate total SGR quantity from all SGR products
               let totalSgrQty = 0;
