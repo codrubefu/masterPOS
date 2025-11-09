@@ -173,20 +173,22 @@ export function PosPage() {
 
   const handleProductAdd = async (searchTerm: string) => {
     if (!searchTerm.trim()) {
-      setToast("Introduceți un termen de căutare");
+      setCartInfo("Introduceți un termen de căutare");
+      setCartError(true);
       return;
     }
 
     try {
       setCartInfo("Căutare produs...");
+      setCartError(false);
       const result = await addProductByUpc(searchTerm);
       setPaymentButtonsEnabled(false); // Disable payment buttons after product add
       if (result.success) {
         const lastItem = items.length > 0 ? items[items.length - 1] : null;
         setCartInfo(`Produs găsit și adăugat: ${lastItem ? lastItem.product.name : searchTerm}`);
-        setCartError(null);
+        setCartError(false);
       } else {
-        setCartInfo("Produsul nu a putut fi adăugat");
+        setCartInfo(result.error || "Produsul nu a putut fi adăugat");
         setCartError(true);
       }
     } catch (error) {
@@ -198,19 +200,19 @@ export function PosPage() {
 
   const handleClientUpdate = async (updatedCustomer: Customer) => {
     if (!updatedCustomer) {
-      setToast("Date client invalide");
+      setCartInfo("Date client invalide");
+      setCartError(true);
       return;
     }
-    try {
-      setToast("Actualizare client...");
-      // setCustomer handles the API call internally
-      await setCustomer(updatedCustomer);
-      setToast("Client actualizat cu succes");
-    } catch (error) {
-      console.error('Client update error:', error);
-      setCartInfo("Eroare la actualizarea clientului");
+    setCartInfo("Actualizare client...");
+    setCartError(false);
+    const result = await setCustomer(updatedCustomer);
+    if (result.success) {
+      setCartInfo("Client actualizat cu succes");
+      setCartError(false);
+    } else {
+      setCartInfo(result.error || "Eroare la actualizarea clientului");
       setCartError(true);
-      setToast("Eroare la actualizarea clientului");
     }
   };
 
@@ -310,7 +312,20 @@ export function PosPage() {
 
   // Wrapper function to convert partial updates to updater function
   const handleUpdateItem = async (id: string, updates: Partial<CartItem>) => {
-    await updateItem(id, (item) => ({ ...item, ...updates }));
+    const result = await updateItem(id, (item) => ({ ...item, ...updates }));
+    if (!result.success) {
+      setCartInfo(result.error || "Eroare la actualizarea produsului");
+      setCartError(true);
+    }
+  };
+
+  // Wrapper function to handle delete with error handling
+  const handleDeleteItem = async (id: string) => {
+    const result = await removeItem(id);
+    if (!result.success) {
+      setCartInfo(result.error || "Eroare la ștergerea produsului");
+      setCartError(true);
+    }
   };
 
   return (
@@ -342,7 +357,7 @@ export function PosPage() {
               items={items}
               selectedId={selectedItemId}
               onSelect={selectItem}
-              onDelete={removeItem}
+              onDelete={handleDeleteItem}
               onMoveUp={moveItemUp}
               onMoveDown={moveItemDown}
               handleProductAdd={handleProductAdd}

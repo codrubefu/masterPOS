@@ -37,16 +37,16 @@ interface CartStore extends CartState {
   receipts: Receipt[];
   customerOptions: Customer[];
   casa: number; // Casa (register) number: 1, 2, 3, or 4
-  addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => Promise<{ success: boolean; itemId?: string }>;
+  addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => Promise<{ success: boolean; itemId?: string; error?: string }>;
   addCustomItem: (input: AddProductInput) => { itemId: string };
   selectItem: (id?: string) => void;
-  updateItem: (id: string, updater: (item: CartItem) => CartItem) => Promise<void>;
-  removeItem: (id: string) => Promise<void>;
+  updateItem: (id: string, updater: (item: CartItem) => CartItem) => Promise<{ success: boolean; error?: string }>;
+  removeItem: (id: string) => Promise<{ success: boolean; error?: string }>;
   moveItemUp: (id: string) => void;
   moveItemDown: (id: string) => void;
   toggleStorno: (id: string) => void;
   setCashGiven: (value: number) => void;
-  setCustomer: (customer: Customer) => void;
+  setCustomer: (customer: Customer) => Promise<{ success: boolean; error?: string }>;
   setPaymentMethod: (method?: PaymentMethod) => void;
   setCasa: (casa: number) => void;
   completePayment: (method: PaymentMethod) => Receipt | undefined;
@@ -105,9 +105,19 @@ export const useCartStore = create<CartStore>()(
           const config = await getConfig();
                  const baseUrl = config.middleware?.apiBaseUrl || '';
           const response = await fetch(`${baseUrl}/api/articles/${encodeURIComponent(upc)}`);
-          if (!response.ok) return { success: false };
+          if (!response.ok) {
+            try {
+              const errorJson = await response.json();
+              return { success: false, error: errorJson.message || `Server error: ${response.status}` };
+            } catch {
+              const errorText = await response.text();
+              return { success: false, error: errorText || `Server error: ${response.status}` };
+            }
+          }
           const apiResponse = await response.json();
-          if (!apiResponse.success || !apiResponse.data) return { success: false };
+          if (!apiResponse.success || !apiResponse.data) {
+            return { success: false, error: apiResponse.message || 'Product not found or invalid response' };
+          }
           const product = {
             id: String(apiResponse.data.id),
             name: apiResponse.data.name,
@@ -190,7 +200,7 @@ export const useCartStore = create<CartStore>()(
           });
           return { success: true, itemId: findLastIdByProduct(get().items, product), data: product };
         } catch (error) {
-          return { success: false };
+          return { success: false, error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` };
         }
       },
       addCustomItem: (input) => {
@@ -248,7 +258,7 @@ export const useCartStore = create<CartStore>()(
         
         // Find the item to update
         const currentItem = state.items.find(i => i.id === id);
-        if (!currentItem) return;
+        if (!currentItem) return { success: false, error: 'Item not found' };
         
         // Apply the updater to get the updated item
         const updatedItem = updater(currentItem);
@@ -271,19 +281,29 @@ export const useCartStore = create<CartStore>()(
           };
           
           // Send to server (same endpoint as add, but with update flag)
-          await fetch(`${baseUrl}/api/articles/${encodeURIComponent(updatedItem.product.upc)}`, {
+          const response = await fetch(`${baseUrl}/api/articles/${encodeURIComponent(updatedItem.product.upc)}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(updatePayload)
           });
+          
+          if (!response.ok) {
+            try {
+              const errorJson = await response.json();
+              return { success: false, error: errorJson.message || `Server error: ${response.status}` };
+            } catch {
+              const errorText = await response.text();
+              return { success: false, error: errorText || `Server error: ${response.status}` };
+            }
+          }
         } catch (error) {
-          console.error('Failed to update item on server:', error);
+          return { success: false, error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` };
         }
         
         // Update local state
-        return new Promise<void>((resolve) => {
+        return new Promise<{ success: boolean; error?: string }>((resolve) => {
           set((state) => {
             // Remove existing SGR tax items temporarily
             let items = state.items.filter(i => i.product.id !== 'sgr-tax');
@@ -316,7 +336,7 @@ export const useCartStore = create<CartStore>()(
             }
             
             const next = recalcState(items, state.cashGiven);
-            resolve();
+            resolve({ success: true });
             return {
               ...state,
               ...next,
@@ -331,7 +351,7 @@ export const useCartStore = create<CartStore>()(
         
         // Find the item to delete
         const itemToDelete = state.items.find(i => i.id === id);
-        if (!itemToDelete) return;
+        if (!itemToDelete) return { success: false, error: 'Item not found' };
         
         // Send delete to server (don't delete SGR tax from server)
         if (itemToDelete.product.id !== 'sgr-tax') {
@@ -340,19 +360,29 @@ export const useCartStore = create<CartStore>()(
             const baseUrl = config.middleware?.apiBaseUrl || '';
             
             // Send DELETE request to server
-            await fetch(`${baseUrl}/api/articles/${encodeURIComponent(itemToDelete.product.upc)}`, {
+            const response = await fetch(`${baseUrl}/api/articles/${encodeURIComponent(itemToDelete.product.upc)}`, {
               method: 'DELETE',
               headers: {
                 'Content-Type': 'application/json'
               }
             });
+            
+            if (!response.ok) {
+              try {
+                const errorJson = await response.json();
+                return { success: false, error: errorJson.message || `Server error: ${response.status}` };
+              } catch {
+                const errorText = await response.text();
+                return { success: false, error: errorText || `Server error: ${response.status}` };
+              }
+            }
           } catch (error) {
-            console.error('Failed to delete item on server:', error);
+            return { success: false, error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` };
           }
         }
         
         // Update local state
-        return new Promise<void>((resolve) => {
+        return new Promise<{ success: boolean; error?: string }>((resolve) => {
           set((state) => {
             // Remove the item
             let items = removeCartItem(state.items, id);
@@ -385,7 +415,7 @@ export const useCartStore = create<CartStore>()(
             }
             
             const next = recalcState(items, state.cashGiven);
-            resolve();
+            resolve({ success: true });
             return {
               ...state,
               ...next,
@@ -480,26 +510,39 @@ export const useCartStore = create<CartStore>()(
             const config = await getConfig();
             const baseUrl = config.middleware?.apiBaseUrl || '';
             const response = await fetch(`${baseUrl}/api/customers/${encodeURIComponent(id)}`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data && data.success && data.data) {
-                set((state) => ({
-                  ...state,
-                  customer: { ...data.data },
-                  lastAction: `Client ${data.data.lastName ?? data.data.id}`
-                }));
-                return;
+            
+            if (!response.ok) {
+              try {
+                const errorJson = await response.json();
+                return { success: false, error: errorJson.message || `Server error: ${response.status}` };
+              } catch {
+                const errorText = await response.text();
+                return { success: false, error: errorText || `Server error: ${response.status}` };
               }
             }
+            
+            const data = await response.json();
+            if (data && data.success && data.data) {
+              set((state) => ({
+                ...state,
+                customer: { ...data.data },
+                lastAction: `Client ${data.data.lastName ?? data.data.id}`
+              }));
+              return { success: true };
+            } else {
+              return { success: false, error: data.message || 'Customer not found or invalid response' };
+            }
           } catch (e) {
-            // ignore fetch errors, fallback to provided customer
+            return { success: false, error: `Network error: ${e instanceof Error ? e.message : 'Unknown error'}` };
           }
         }
+        
         set((state) => ({
           ...state,
           customer,
           lastAction: `Client ${customer.lastName ?? customer.id}`
         }));
+        return { success: true };
       },
       setCasa: (casa) =>
         set((state) => ({
