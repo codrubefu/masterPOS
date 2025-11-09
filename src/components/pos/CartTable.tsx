@@ -10,11 +10,11 @@ export interface CartTableProps {
   items: CartItem[];
   selectedId?: string;
   onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   onMoveUp: (id: string) => void;
   onMoveDown: (id: string) => void;
   handleProductAdd: (searchTerm: string) => Promise<void>;
-  onUpdateItem: (id: string, updates: Partial<CartItem>) => void;
+  onUpdateItem: (id: string, updates: Partial<CartItem>) => Promise<void>;
 }
 
 
@@ -77,11 +77,11 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
     setEditModalOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingItem && editQuantity) {
       const newQuantity = parseFloat(editQuantity);
       if (newQuantity > 0) {
-        onUpdateItem(editingItem.id, { qty: newQuantity });
+        await onUpdateItem(editingItem.id, { qty: newQuantity });
         setEditModalOpen(false);
         setEditingItem(null);
         setEditQuantity("");
@@ -202,9 +202,9 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
-                          onClick={(event) => {
+                          onClick={async (event) => {
                             event.stopPropagation();
-                            onDelete(item.id);
+                            await onDelete(item.id);
                           }}
                           className={clsx(rowButtonClass, "bg-red-50 text-red-600 border-red-200")}
                         >

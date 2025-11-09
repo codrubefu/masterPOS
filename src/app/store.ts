@@ -40,8 +40,8 @@ interface CartStore extends CartState {
   addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => Promise<{ success: boolean; itemId?: string }>;
   addCustomItem: (input: AddProductInput) => { itemId: string };
   selectItem: (id?: string) => void;
-  updateItem: (id: string, updater: (item: CartItem) => CartItem) => void;
-  removeItem: (id: string) => void;
+  updateItem: (id: string, updater: (item: CartItem) => CartItem) => Promise<void>;
+  removeItem: (id: string) => Promise<void>;
   moveItemUp: (id: string) => void;
   moveItemDown: (id: string) => void;
   toggleStorno: (id: string) => void;
@@ -242,85 +242,159 @@ export const useCartStore = create<CartStore>()(
           selectedItemId: id,
           lastAction: id ? `Selectat produs` : state.lastAction
         })),
-      updateItem: (id, updater) =>
-        set((state) => {
-          // Remove existing SGR tax items temporarily
-          let items = state.items.filter(i => i.product.id !== 'sgr-tax');
+      updateItem: async (id, updater) => {
+        // Get the current state
+        const state = get();
+        
+        // Find the item to update
+        const currentItem = state.items.find(i => i.id === id);
+        if (!currentItem) return;
+        
+        // Apply the updater to get the updated item
+        const updatedItem = updater(currentItem);
+        
+        // Send update to server
+        try {
+          const config = await getConfig();
+          const baseUrl = config.middleware?.apiBaseUrl || '';
           
-          // Update the item
-          items = updateCartItem(items, id, updater);
-          
-          // Calculate total SGR quantity from all SGR products
-          let totalSgrQty = 0;
-          for (const i of items) {
-            if (i.product.sgr && !i.storno) {
-              totalSgrQty += i.qty;
-            }
-          }
-          
-          // Add SGR tax item at the end if needed
-          if (totalSgrQty > 0) {
-            const sgrProduct: Product = {
-              id: 'sgr-tax',
-              upc: 'SGR-TAX',
-              name: 'Taxa SGR',
-              price: 0.5
-            };
-            const sgrItem = createCartItem({ 
-              product: sgrProduct, 
-              qty: totalSgrQty, 
-              unitPrice: 0.5 
-            });
-            items = [...items, sgrItem];
-          }
-          
-          const next = recalcState(items, state.cashGiven);
-          return {
-            ...state,
-            ...next,
-            lastAction: `Actualizat linia`
+          // Prepare the update payload
+          const updatePayload = {
+            id: updatedItem.product.id,
+            upc: updatedItem.product.upc,
+            name: updatedItem.product.name,
+            price: updatedItem.unitPrice,
+            qty: updatedItem.qty,
+            percentDiscount: updatedItem.percentDiscount,
+            valueDiscount: updatedItem.valueDiscount,
+            storno: updatedItem.storno
           };
-        }),
-      removeItem: (id) =>
-        set((state) => {
-          // Remove the item
-          let items = removeCartItem(state.items, id);
           
-          // Remove existing SGR tax items
-          items = items.filter(i => i.product.id !== 'sgr-tax');
-          
-          // Calculate total SGR quantity from all SGR products
-          let totalSgrQty = 0;
-          for (const i of items) {
-            if (i.product.sgr && !i.storno) {
-              totalSgrQty += i.qty;
+          // Send to server (same endpoint as add, but with update flag)
+          await fetch(`${baseUrl}/api/articles/${encodeURIComponent(updatedItem.product.upc)}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatePayload)
+          });
+        } catch (error) {
+          console.error('Failed to update item on server:', error);
+        }
+        
+        // Update local state
+        return new Promise<void>((resolve) => {
+          set((state) => {
+            // Remove existing SGR tax items temporarily
+            let items = state.items.filter(i => i.product.id !== 'sgr-tax');
+            
+            // Update the item
+            items = updateCartItem(items, id, updater);
+            
+            // Calculate total SGR quantity from all SGR products
+            let totalSgrQty = 0;
+            for (const i of items) {
+              if (i.product.sgr && !i.storno) {
+                totalSgrQty += i.qty;
+              }
             }
-          }
-          
-          // Add SGR tax item at the end if needed
-          if (totalSgrQty > 0) {
-            const sgrProduct: Product = {
-              id: 'sgr-tax',
-              upc: 'SGR-TAX',
-              name: 'Taxa SGR',
-              price: 0.5
+            
+            // Add SGR tax item at the end if needed
+            if (totalSgrQty > 0) {
+              const sgrProduct: Product = {
+                id: 'sgr-tax',
+                upc: 'SGR-TAX',
+                name: 'Taxa SGR',
+                price: 0.5
+              };
+              const sgrItem = createCartItem({ 
+                product: sgrProduct, 
+                qty: totalSgrQty, 
+                unitPrice: 0.5 
+              });
+              items = [...items, sgrItem];
+            }
+            
+            const next = recalcState(items, state.cashGiven);
+            resolve();
+            return {
+              ...state,
+              ...next,
+              lastAction: `Actualizat linia`
             };
-            const sgrItem = createCartItem({ 
-              product: sgrProduct, 
-              qty: totalSgrQty, 
-              unitPrice: 0.5 
+          });
+        });
+      },
+      removeItem: async (id) => {
+        // Get the current state
+        const state = get();
+        
+        // Find the item to delete
+        const itemToDelete = state.items.find(i => i.id === id);
+        if (!itemToDelete) return;
+        
+        // Send delete to server (don't delete SGR tax from server)
+        if (itemToDelete.product.id !== 'sgr-tax') {
+          try {
+            const config = await getConfig();
+            const baseUrl = config.middleware?.apiBaseUrl || '';
+            
+            // Send DELETE request to server
+            await fetch(`${baseUrl}/api/articles/${encodeURIComponent(itemToDelete.product.upc)}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json'
+              }
             });
-            items = [...items, sgrItem];
+          } catch (error) {
+            console.error('Failed to delete item on server:', error);
           }
-          
-          const next = recalcState(items, state.cashGiven);
-          return {
-            ...state,
-            ...next,
-            selectedItemId: next.items.at(-1)?.id,
-            lastAction: `Produs șters`
-          };
-        }),
+        }
+        
+        // Update local state
+        return new Promise<void>((resolve) => {
+          set((state) => {
+            // Remove the item
+            let items = removeCartItem(state.items, id);
+            
+            // Remove existing SGR tax items
+            items = items.filter(i => i.product.id !== 'sgr-tax');
+            
+            // Calculate total SGR quantity from all SGR products
+            let totalSgrQty = 0;
+            for (const i of items) {
+              if (i.product.sgr && !i.storno) {
+                totalSgrQty += i.qty;
+              }
+            }
+            
+            // Add SGR tax item at the end if needed
+            if (totalSgrQty > 0) {
+              const sgrProduct: Product = {
+                id: 'sgr-tax',
+                upc: 'SGR-TAX',
+                name: 'Taxa SGR',
+                price: 0.5
+              };
+              const sgrItem = createCartItem({ 
+                product: sgrProduct, 
+                qty: totalSgrQty, 
+                unitPrice: 0.5 
+              });
+              items = [...items, sgrItem];
+            }
+            
+            const next = recalcState(items, state.cashGiven);
+            resolve();
+            return {
+              ...state,
+              ...next,
+              selectedItemId: next.items.at(-1)?.id,
+              lastAction: `Produs șters`
+            };
+          });
+        });
+      },
       moveItemUp: (id) =>
         set((state) => {
           // Don't allow moving SGR tax item

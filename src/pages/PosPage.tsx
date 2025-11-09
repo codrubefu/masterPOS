@@ -309,8 +309,8 @@ export function PosPage() {
   };
 
   // Wrapper function to convert partial updates to updater function
-  const handleUpdateItem = (id: string, updates: Partial<CartItem>) => {
-    updateItem(id, (item) => ({ ...item, ...updates }));
+  const handleUpdateItem = async (id: string, updates: Partial<CartItem>) => {
+    await updateItem(id, (item) => ({ ...item, ...updates }));
   };
 
   return (
