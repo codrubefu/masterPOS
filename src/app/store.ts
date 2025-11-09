@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { CUSTOMERS, DEFAULT_CUSTOMER } from "../mocks/customers";
 import { roundMoney } from "../lib/money";
 import { getConfig } from './configLoader';
 
@@ -54,6 +53,11 @@ interface CartStore extends CartState {
   resetCart: () => void;
 }
 
+const DEFAULT_CUSTOMER: Customer = {
+  id: "",
+  type: "pf"
+};
+
 const initialState: CartState = {
   ...resetCart(),
   customer: DEFAULT_CUSTOMER,
@@ -93,7 +97,7 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       ...initialState,
       receipts: [],
-      customerOptions: CUSTOMERS,
+      customerOptions: [],
       casa: 1, // Default casa is 1
       addProductByUpc: async (upc, input) => {
         // Fetch product from API

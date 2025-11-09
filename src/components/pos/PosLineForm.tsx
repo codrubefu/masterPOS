@@ -4,7 +4,6 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { CartItem, Product } from "../../features/cart/types";
 import { parseNumericInput } from "../../lib/money";
 import { POS_SHORTCUTS } from "../../lib/shortcuts";
-import { searchProducts } from "../../mocks/products";
 
 export interface LineFormValues {
   upc: string;
@@ -92,7 +91,10 @@ export function PosLineForm({
     { enableOnFormTags: true }
   );
 
-  const suggestions = useMemo(() => searchProducts(searchTerm).slice(0, 5), [searchTerm]);
+  const suggestions = useMemo(() => {
+    // No local search, return empty array
+    return [] as Product[];
+  }, [searchTerm]);
 
   const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
