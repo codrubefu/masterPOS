@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useEffect } from "react";
+import { ChangeEvent, useRef, useEffect, useState } from "react";
 import clsx from "clsx";
 import { Customer } from "../../features/cart/types";
 
@@ -15,6 +15,9 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ value, onChange }: ClientCardProps) {
+  // Local state for card ID search
+  const [searchCardId, setSearchCardId] = useState("");
+  
   // Refs for all inputs
   const idRef = useRef<HTMLInputElement | null>(null);
   const lastNameRef = useRef<HTMLInputElement | null>(null);
@@ -44,6 +47,12 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
+      
+      // Trigger the search by calling onChange with the search ID
+      if (onChange && searchCardId.trim()) {
+        onChange({ ...customer, id: searchCardId.trim() });
+      }
+      
       // Close the onscreen keyboard by blurring the input
       event.currentTarget.blur();
     }
@@ -54,7 +63,6 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     if (!onChange) return;
     
     const refs = [
-      { ref: idRef, field: "id" as keyof Customer },
       { ref: lastNameRef, field: "lastName" as keyof Customer },
       { ref: firstNameRef, field: "firstName" as keyof Customer },
       { ref: discountPercentRef, field: "discountPercent" as keyof Customer },
@@ -79,6 +87,21 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     };
   }, [customer, onChange]);
 
+  // Sync searchCardId with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = idRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setSearchCardId(e.target.value);
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, []);
+
   return (
     <section className="rounded-2xl bg-white shadow-card p-5 flex flex-col gap-4 mb-6">
 
@@ -90,11 +113,11 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             type="number"
             inputMode="numeric"
             data-keyboard="numeric"
-            value={customer.id ?? ""}
-            onChange={handleChange("id")}
+            value={searchCardId}
+            onChange={(event) => setSearchCardId(event.target.value)}
             onKeyDown={handleKeyDown}
             className={inputClassName}
-            placeholder="Introduceți card"
+            placeholder="Caută card..."
           />
         </label>
         <label className="flex flex-col gap-1">
