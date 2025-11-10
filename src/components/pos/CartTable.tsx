@@ -68,6 +68,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
       event.preventDefault();
       handleProductAdd(searchTerm);
       setSearchTerm(""); // Clear the search term after search
+      event.currentTarget.blur(); // Close the onscreen keyboard
     }
   };
 
