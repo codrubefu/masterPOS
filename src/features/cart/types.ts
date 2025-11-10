@@ -33,6 +33,10 @@ export interface CartState {
   customer?: Customer;
   items: CartItem[];
   cashGiven: number;
+  codFiscal: string;
+  bonuriValorice: number;
+  cardAmount: number;
+  numerarAmount: number;
   subtotal: number;
   totalDiscount: number;
   total: number;

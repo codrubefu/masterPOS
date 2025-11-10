@@ -46,6 +46,10 @@ interface CartStore extends CartState {
   moveItemDown: (id: string) => void;
   toggleStorno: (id: string) => void;
   setCashGiven: (value: number) => void;
+  setCodFiscal: (value: string) => void;
+  setBonuriValorice: (value: number) => void;
+  setCardAmount: (value: number) => void;
+  setNumerarAmount: (value: number) => void;
   setCustomer: (customer: Customer) => Promise<{ success: boolean; error?: string }>;
   setPaymentMethod: (method?: PaymentMethod) => void;
   setCasa: (casa: number) => void;
@@ -547,6 +551,30 @@ export const useCartStore = create<CartStore>()(
             lastAction: "Actualizat plată numerar"
           };
         }),
+      setCodFiscal: (value) =>
+        set((state) => ({
+          ...state,
+          codFiscal: value,
+          lastAction: "Actualizat cod fiscal"
+        })),
+      setBonuriValorice: (value) =>
+        set((state) => ({
+          ...state,
+          bonuriValorice: roundMoney(Math.max(value, 0)),
+          lastAction: "Actualizat bonuri valorice"
+        })),
+      setCardAmount: (value) =>
+        set((state) => ({
+          ...state,
+          cardAmount: roundMoney(Math.max(value, 0)),
+          lastAction: "Actualizat sumă card"
+        })),
+      setNumerarAmount: (value) =>
+        set((state) => ({
+          ...state,
+          numerarAmount: roundMoney(Math.max(value, 0)),
+          lastAction: "Actualizat sumă numerar"
+        })),
       setCustomer: async (customer) => {
         // If id is present, fetch from API
         const id = customer.id?.toString().trim();

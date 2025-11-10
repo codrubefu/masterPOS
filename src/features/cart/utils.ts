@@ -102,6 +102,10 @@ export function resetCart(): CartState {
   return {
     items: [],
     cashGiven: 0,
+    codFiscal: '',
+    bonuriValorice: 0,
+    cardAmount: 0,
+    numerarAmount: 0,
     subtotal: 0,
     totalDiscount: 0,
     total: 0,

@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useRef, useEffect } from "react";
 import { formatMoney, parseNumericInput } from "../../lib/money";
+import { useCartStore } from "../../app/store";
 
 interface TotalsPanelProps {
   subtotal: number;
@@ -13,8 +14,24 @@ interface TotalsPanelProps {
 export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }: TotalsPanelProps) {
   const inputClass = "h-12 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/40";
   
+  // Get values from store
+  const codFiscal = useCartStore((state) => state.codFiscal);
+  const setCodFiscal = useCartStore((state) => state.setCodFiscal);
+  const bonuriValorice = useCartStore((state) => state.bonuriValorice);
+  const setBonuriValorice = useCartStore((state) => state.setBonuriValorice);
+  const cardAmount = useCartStore((state) => state.cardAmount);
+  const setCardAmount = useCartStore((state) => state.setCardAmount);
+  const numerarAmount = useCartStore((state) => state.numerarAmount);
+  const setNumerarAmount = useCartStore((state) => state.setNumerarAmount);
+  
   // Ref for cash given input
   const cashGivenInputRef = useRef<HTMLInputElement | null>(null);
+  // Ref for cod fiscal input
+  const codFiscalInputRef = useRef<HTMLInputElement | null>(null);
+  // Refs for payment split inputs
+  const bonuriValoriceInputRef = useRef<HTMLInputElement | null>(null);
+  const cardAmountInputRef = useRef<HTMLInputElement | null>(null);
+  const numerarAmountInputRef = useRef<HTMLInputElement | null>(null);
 
   // Sync cashGiven state with native input events (for onscreen keyboard)
   useEffect(() => {
@@ -31,10 +48,82 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
     };
   }, [onCashChange]);
 
+  // Sync codFiscal state with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = codFiscalInputRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setCodFiscal(e.target.value);
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, [setCodFiscal]);
+
+  // Sync bonuriValorice state with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = bonuriValoriceInputRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setBonuriValorice(parseNumericInput(e.target.value));
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, [setBonuriValorice]);
+
+  // Sync cardAmount state with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = cardAmountInputRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setCardAmount(parseNumericInput(e.target.value));
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, [setCardAmount]);
+
+  // Sync numerarAmount state with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = numerarAmountInputRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setNumerarAmount(parseNumericInput(e.target.value));
+      }
+    };
+    input.addEventListener('input', handleNativeInput);
+    return () => {
+      input.removeEventListener('input', handleNativeInput);
+    };
+  }, [setNumerarAmount]);
+
+  // Calculate the sum of payment splits
+  const paymentSplitSum = bonuriValorice + cardAmount + numerarAmount;
+  const difference = paymentSplitSum - total;
+  const hasError = Math.abs(difference) > 0.001; // Small tolerance for floating point
+
   return (
     <section className="rounded-2xl bg-white shadow-card p-5 grid grid-cols-2 gap-4 text-sm">
-      <div>
-      
+      <div className="flex flex-col gap-1">
+        {hasError && (
+          <div className={clsx(
+            "h-12 rounded-xl border px-3 flex items-center font-semibold",
+            difference > 0 ? "bg-red-50 border-red-200 text-red-600" : "bg-amber-50 border-amber-200 text-amber-600"
+          )}>
+            {difference > 0 ? "+" : ""}{formatMoney(difference)}
+          </div>
+        )}
       </div>
       <div>
         <p className="text-xs uppercase tracking-wide text-gray-500">Valoare totală</p>
@@ -59,20 +148,54 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
       </div>
       <div className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Cod fiscal</span>
-        <div className="h-12 rounded-xl border border-gray-100 px-3 flex items-center bg-slate-50">RO999999</div>
+        <input
+          ref={codFiscalInputRef}
+          className={clsx(inputClass, "bg-white")}
+          value={codFiscal}
+          placeholder=""
+          data-keyboard="text"
+          onChange={(event) => setCodFiscal(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          }}
+        />
       </div>
-      <div className="flex flex-col gap-1">
+      <label className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Bonuri valorice</span>
-        <div className="h-12 rounded-xl border border-gray-100 px-3 flex items-center bg-slate-50">0.00</div>
-      </div>
-      <div className="flex flex-col gap-1">
+        <input
+          ref={bonuriValoriceInputRef}
+          className={clsx(inputClass, "bg-white", hasError && "border-red-300")}
+          value={bonuriValorice}
+          inputMode="decimal"
+          data-keyboard="numeric"
+          onChange={(event) => setBonuriValorice(parseNumericInput(event.target.value))}
+        />
+      </label>
+      <label className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Card</span>
-        <div className="h-12 rounded-xl border border-gray-100 px-3 flex items-center bg-slate-50">{formatMoney(total - cashGiven + change)}</div>
-      </div>
-      <div className="flex flex-col gap-1">
+        <input
+          ref={cardAmountInputRef}
+          className={clsx(inputClass, "bg-white", hasError && "border-red-300")}
+          value={cardAmount}
+          inputMode="decimal"
+          data-keyboard="numeric"
+          onChange={(event) => setCardAmount(parseNumericInput(event.target.value))}
+        />
+      </label>
+      <label className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Numerar</span>
-        <div className="h-12 rounded-xl border border-gray-100 px-3 flex items-center bg-slate-50">{formatMoney(cashGiven)}</div>
-      </div>
+        <input
+          ref={numerarAmountInputRef}
+          className={clsx(inputClass, "bg-white", hasError && "border-red-300")}
+          value={numerarAmount}
+          inputMode="decimal"
+          data-keyboard="numeric"
+          onChange={(event) => setNumerarAmount(parseNumericInput(event.target.value))}
+        />
+      </label>
     </section>
   );
 }
