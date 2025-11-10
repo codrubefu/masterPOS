@@ -9,6 +9,7 @@ export interface AddProductInput {
   percentDiscount?: number;
   valueDiscount?: number;
   storno?: boolean;
+  casa?: number;
 }
 
 export function createCartItem(input: AddProductInput): CartItem {
@@ -21,7 +22,8 @@ export function createCartItem(input: AddProductInput): CartItem {
     unitPrice,
     percentDiscount: input.valueDiscount ? undefined : normalizePercent(input.percentDiscount),
     valueDiscount: input.valueDiscount ? Math.max(input.valueDiscount, 0) : undefined,
-    storno: input.storno ?? false
+    storno: input.storno ?? false,
+    casa: input.casa
   };
 }
 

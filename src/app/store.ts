@@ -93,7 +93,7 @@ const storage = createJSONStorage(() =>
 );
 
 // Helper function to update SGR items by type
-async function updateSgrItems(items: CartItem[], config: any) {
+async function updateSgrItems(items: CartItem[], config: any, casa: number) {
   const baseUrl = config.middleware?.apiBaseUrl || '';
   
   // Calculate quantities for each SGR type
@@ -131,7 +131,8 @@ async function updateSgrItems(items: CartItem[], config: any) {
         upc: sgr.upc.padEnd(20),
         price: 0.5,
         quantity: sgr.qty,
-        sgr: ''.padEnd(50)
+        sgr: ''.padEnd(50),
+        casa
       };
       
       try {
@@ -150,7 +151,7 @@ async function updateSgrItems(items: CartItem[], config: any) {
 }
 
 // Helper function to recalculate and add SGR tax items locally
-function addSgrTaxItems(items: CartItem[]): CartItem[] {
+function addSgrTaxItems(items: CartItem[], casa?: number): CartItem[] {
   // Remove existing SGR tax items
   items = items.filter(item => !['1112', '1113', '1114'].includes(item.product.id));
   
@@ -182,7 +183,7 @@ function addSgrTaxItems(items: CartItem[]): CartItem[] {
       name: 'Returnare Garantie SGR PET',
       price: 0.5
     };
-    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.PET, unitPrice: 0.5 }));
+    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.PET, unitPrice: 0.5, casa }));
   }
   
   if (sgrQuantities.Doza > 0) {
@@ -192,7 +193,7 @@ function addSgrTaxItems(items: CartItem[]): CartItem[] {
       name: 'Returnare Garantie SGR Doza',
       price: 0.5
     };
-    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Doza, unitPrice: 0.5 }));
+    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Doza, unitPrice: 0.5, casa }));
   }
   
   if (sgrQuantities.Sticla > 0) {
@@ -202,7 +203,7 @@ function addSgrTaxItems(items: CartItem[]): CartItem[] {
       name: 'Returnare Garantie SGR Sticla',
       price: 0.5
     };
-    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Sticla, unitPrice: 0.5 }));
+    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Sticla, unitPrice: 0.5, casa }));
   }
   
   return items;
@@ -219,8 +220,10 @@ export const useCartStore = create<CartStore>()(
         // Fetch product from API
         try {
           const config = await getConfig();
-                 const baseUrl = config.middleware?.apiBaseUrl || '';
-          const response = await fetch(`${baseUrl}/api/articles/${encodeURIComponent(upc)}`);
+          const baseUrl = config.middleware?.apiBaseUrl || '';
+          const casa = get().casa;
+          
+          const response = await fetch(`${baseUrl}/api/articles/${encodeURIComponent(upc)}?casa=${casa}`);
           if (!response.ok) {
             try {
               const errorJson = await response.json();
@@ -246,7 +249,8 @@ export const useCartStore = create<CartStore>()(
             unitPrice: input?.unitPrice ?? product.price,
             percentDiscount: input?.percentDiscount,
             valueDiscount: input?.valueDiscount,
-            storno: input?.storno
+            storno: input?.storno,
+            casa
           } satisfies Partial<CartItem>;
           
           set((state) => {
@@ -254,7 +258,7 @@ export const useCartStore = create<CartStore>()(
             let items = mergeItems(state.items, product, qty, overrides);
             
             // Recalculate and add SGR tax items
-            items = addSgrTaxItems(items);
+            items = addSgrTaxItems(items, casa);
             
             const next = recalcState(items, state.cashGiven);
             const itemId = findLastIdByProduct(items, product);
@@ -268,7 +272,7 @@ export const useCartStore = create<CartStore>()(
           
           // Update SGR items on server
           if (product.sgr) {
-            await updateSgrItems(get().items, config);
+            await updateSgrItems(get().items, config, casa);
           }
           
           return { success: true, itemId: findLastIdByProduct(get().items, product), data: product };
@@ -277,13 +281,15 @@ export const useCartStore = create<CartStore>()(
         }
       },
       addCustomItem: (input) => {
-        const item = createCartItem(input);
+        const casa = get().casa;
+        const item = createCartItem({ ...input, casa });
+        
         set((state) => {
           // Add the new item
           let items = [...state.items, item];
           
           // Recalculate and add SGR tax items
-          items = addSgrTaxItems(items);
+          items = addSgrTaxItems(items, casa);
           
           const next = recalcState(items, state.cashGiven);
           return {
@@ -297,7 +303,7 @@ export const useCartStore = create<CartStore>()(
         // Update SGR items on server if needed
         if (item.product.sgr) {
           getConfig().then(config => {
-            updateSgrItems(get().items, config);
+            updateSgrItems(get().items, config, casa);
           });
         }
         
@@ -312,6 +318,7 @@ export const useCartStore = create<CartStore>()(
       updateItem: async (id, updater) => {
         // Get the current state
         const state = get();
+        const casa = state.casa;
         
         // Find the item to update
         const currentItem = state.items.find(i => i.id === id);
@@ -334,7 +341,8 @@ export const useCartStore = create<CartStore>()(
             qty: updatedItem.qty,
             percentDiscount: updatedItem.percentDiscount,
             valueDiscount: updatedItem.valueDiscount,
-            storno: updatedItem.storno
+            storno: updatedItem.storno,
+            casa
           };
           
           // Send to server (same endpoint as add, but with update flag)
@@ -384,7 +392,7 @@ export const useCartStore = create<CartStore>()(
               });
               
               // Recalculate and add SGR tax items
-              items = addSgrTaxItems(items);
+              items = addSgrTaxItems(items, casa);
               
               const next = recalcState(items, state.cashGiven);
               resolve({ success: true, data: apiResponse.data });
@@ -396,7 +404,7 @@ export const useCartStore = create<CartStore>()(
             });
             
             // Update SGR items on server
-            updateSgrItems(get().items, config);
+            updateSgrItems(get().items, config, casa);
           });
         } catch (error) {
           return { success: false, error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` };
@@ -405,6 +413,7 @@ export const useCartStore = create<CartStore>()(
       removeItem: async (id) => {
         // Get the current state
         const state = get();
+        const casa = state.casa;
         
         // Find the item to delete
         const itemToDelete = state.items.find(i => i.id === id);
@@ -425,7 +434,8 @@ export const useCartStore = create<CartStore>()(
               qty: itemToDelete.qty,
               percentDiscount: itemToDelete.percentDiscount,
               valueDiscount: itemToDelete.valueDiscount,
-              storno: itemToDelete.storno
+              storno: itemToDelete.storno,
+              casa
             };
             
             // Send DELETE request to server with item data in body
@@ -458,7 +468,7 @@ export const useCartStore = create<CartStore>()(
             let items = removeCartItem(state.items, id);
             
             // Recalculate and add SGR tax items
-            items = addSgrTaxItems(items);
+            items = addSgrTaxItems(items, casa);
             
             const next = recalcState(items, state.cashGiven);
             resolve({ success: true });
@@ -472,7 +482,7 @@ export const useCartStore = create<CartStore>()(
           
           // Update SGR items on server
           getConfig().then(config => {
-            updateSgrItems(get().items, config);
+            updateSgrItems(get().items, config, casa);
           });
         });
       },
@@ -502,6 +512,8 @@ export const useCartStore = create<CartStore>()(
         }),
       toggleStorno: (id) =>
         set((state) => {
+          const casa = state.casa;
+          
           // Toggle storno on the item
           let items = updateCartItem(state.items, id, (item) => ({
             ...item,
@@ -509,13 +521,13 @@ export const useCartStore = create<CartStore>()(
           }));
           
           // Recalculate and add SGR tax items
-          items = addSgrTaxItems(items);
+          items = addSgrTaxItems(items, casa);
           
           const next = recalcState(items, state.cashGiven);
           
           // Update SGR items on server
           getConfig().then(config => {
-            updateSgrItems(items, config);
+            updateSgrItems(items, config, casa);
           });
           
           return {
@@ -542,7 +554,9 @@ export const useCartStore = create<CartStore>()(
           try {
             const config = await getConfig();
             const baseUrl = config.middleware?.apiBaseUrl || '';
-            const response = await fetch(`${baseUrl}/api/customers/${encodeURIComponent(id)}`);
+            const casa = get().casa;
+            
+            const response = await fetch(`${baseUrl}/api/customers/${encodeURIComponent(id)}?casa=${casa}`);
             
             if (!response.ok) {
               try {

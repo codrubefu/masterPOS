@@ -26,6 +26,7 @@ export interface CartItem {
   percentDiscount?: number;
   valueDiscount?: number;
   storno?: boolean;
+  casa?: number;
 }
 
 export interface CartState {
