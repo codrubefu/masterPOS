@@ -92,6 +92,122 @@ const storage = createJSONStorage(() =>
   typeof window !== "undefined" && window.localStorage ? window.localStorage : memoryStorage
 );
 
+// Helper function to update SGR items by type
+async function updateSgrItems(items: CartItem[], config: any) {
+  const baseUrl = config.middleware?.apiBaseUrl || '';
+  
+  // Calculate quantities for each SGR type
+  const sgrQuantities = {
+    'PET': 0,
+    'Sticla': 0,
+    'Doza': 0
+  };
+  
+  for (const item of items) {
+    if (item.product.sgr && !item.storno) {
+      const sgrType = item.product.sgr.trim().toUpperCase();
+      if (sgrType === 'PET') {
+        sgrQuantities.PET += item.qty;
+      } else if (sgrType === 'STICLA') {
+        sgrQuantities.Sticla += item.qty;
+      } else if (sgrType === 'DOZA') {
+        sgrQuantities.Doza += item.qty;
+      }
+    }
+  }
+  
+  // Send updates for each SGR type
+  const sgrProducts = [
+    { type: 'PET', id: '1112', upc: '1112', name: 'Returnare Garantie SGR PET', qty: sgrQuantities.PET },
+    { type: 'Doza', id: '1113', upc: '1113', name: 'Returnare Garantie SGR Doza', qty: sgrQuantities.Doza },
+    { type: 'Sticla', id: '1114', upc: '1114', name: 'Returnare Garantie SGR Sticla', qty: sgrQuantities.Sticla }
+  ];
+  
+  for (const sgr of sgrProducts) {
+    if (sgr.qty > 0) {
+      const updatePayload = {
+        id: sgr.id.padEnd(20),
+        name: sgr.name.padEnd(40),
+        upc: sgr.upc.padEnd(20),
+        price: 0.5,
+        quantity: sgr.qty,
+        sgr: ''.padEnd(50)
+      };
+      
+      try {
+        await fetch(`${baseUrl}/api/articles/${encodeURIComponent(sgr.upc)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updatePayload)
+        });
+      } catch (error) {
+        console.error(`Failed to update SGR ${sgr.type}:`, error);
+      }
+    }
+  }
+}
+
+// Helper function to recalculate and add SGR tax items locally
+function addSgrTaxItems(items: CartItem[]): CartItem[] {
+  // Remove existing SGR tax items
+  items = items.filter(item => !['1112', '1113', '1114'].includes(item.product.id));
+  
+  // Calculate quantities for each SGR type
+  const sgrQuantities = {
+    'PET': 0,
+    'Sticla': 0,
+    'Doza': 0
+  };
+  
+  for (const item of items) {
+    if (item.product.sgr && !item.storno) {
+      const sgrType = item.product.sgr.trim().toUpperCase();
+      if (sgrType === 'PET') {
+        sgrQuantities.PET += item.qty;
+      } else if (sgrType === 'STICLA') {
+        sgrQuantities.Sticla += item.qty;
+      } else if (sgrType === 'DOZA') {
+        sgrQuantities.Doza += item.qty;
+      }
+    }
+  }
+  
+  // Add SGR tax items
+  if (sgrQuantities.PET > 0) {
+    const sgrProduct: Product = {
+      id: '1112',
+      upc: '1112',
+      name: 'Returnare Garantie SGR PET',
+      price: 0.5
+    };
+    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.PET, unitPrice: 0.5 }));
+  }
+  
+  if (sgrQuantities.Doza > 0) {
+    const sgrProduct: Product = {
+      id: '1113',
+      upc: '1113',
+      name: 'Returnare Garantie SGR Doza',
+      price: 0.5
+    };
+    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Doza, unitPrice: 0.5 }));
+  }
+  
+  if (sgrQuantities.Sticla > 0) {
+    const sgrProduct: Product = {
+      id: '1114',
+      upc: '1114',
+      name: 'Returnare Garantie SGR Sticla',
+      price: 0.5
+    };
+    items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Sticla, unitPrice: 0.5 }));
+  }
+  
+  return items;
+}
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -132,62 +248,13 @@ export const useCartStore = create<CartStore>()(
             valueDiscount: input?.valueDiscount,
             storno: input?.storno
           } satisfies Partial<CartItem>;
+          
           set((state) => {
-            // Remove existing SGR tax items temporarily
-            let items = state.items.filter(item => item.product.id !== 'sgr-tax');
-            
             // Add the new product
-            items = mergeItems(items, product, qty, overrides);
+            let items = mergeItems(state.items, product, qty, overrides);
             
-            // If product has SGR, calculate total SGR quantity needed
-            if (product.sgr) {
-              // Calculate total SGR quantity from all SGR products
-              let totalSgrQty = 0;
-              for (const item of items) {
-                if (item.product.sgr && !item.storno) {
-                  totalSgrQty += item.qty;
-                }
-              }
-              
-              // Add SGR tax item at the end
-              if (totalSgrQty > 0) {
-                const sgrProduct: Product = {
-                  id: 'sgr-tax',
-                  upc: 'SGR-TAX',
-                  name: 'Taxa SGR',
-                  price: 0.5
-                };
-                const sgrItem = createCartItem({ 
-                  product: sgrProduct, 
-                  qty: totalSgrQty, 
-                  unitPrice: 0.5 
-                });
-                items = [...items, sgrItem];
-              }
-            } else {
-              // Re-add SGR tax if there are SGR products
-              let totalSgrQty = 0;
-              for (const item of items) {
-                if (item.product.sgr && !item.storno) {
-                  totalSgrQty += item.qty;
-                }
-              }
-              
-              if (totalSgrQty > 0) {
-                const sgrProduct: Product = {
-                  id: 'sgr-tax',
-                  upc: 'SGR-TAX',
-                  name: 'Taxa SGR',
-                  price: 0.5
-                };
-                const sgrItem = createCartItem({ 
-                  product: sgrProduct, 
-                  qty: totalSgrQty, 
-                  unitPrice: 0.5 
-                });
-                items = [...items, sgrItem];
-              }
-            }
+            // Recalculate and add SGR tax items
+            items = addSgrTaxItems(items);
             
             const next = recalcState(items, state.cashGiven);
             const itemId = findLastIdByProduct(items, product);
@@ -198,6 +265,12 @@ export const useCartStore = create<CartStore>()(
               lastAction: `Adăugat ${product.name}`
             };
           });
+          
+          // Update SGR items on server
+          if (product.sgr) {
+            await updateSgrItems(get().items, config);
+          }
+          
           return { success: true, itemId: findLastIdByProduct(get().items, product), data: product };
         } catch (error) {
           return { success: false, error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` };
@@ -206,35 +279,11 @@ export const useCartStore = create<CartStore>()(
       addCustomItem: (input) => {
         const item = createCartItem(input);
         set((state) => {
-          // Remove existing SGR tax items temporarily
-          let items = state.items.filter(i => i.product.id !== 'sgr-tax');
-          
           // Add the new item
-          items = [...items, item];
+          let items = [...state.items, item];
           
-          // Calculate total SGR quantity from all SGR products
-          let totalSgrQty = 0;
-          for (const i of items) {
-            if (i.product.sgr && !i.storno) {
-              totalSgrQty += i.qty;
-            }
-          }
-          
-          // Add SGR tax item at the end if needed
-          if (totalSgrQty > 0) {
-            const sgrProduct: Product = {
-              id: 'sgr-tax',
-              upc: 'SGR-TAX',
-              name: 'Taxa SGR',
-              price: 0.5
-            };
-            const sgrItem = createCartItem({ 
-              product: sgrProduct, 
-              qty: totalSgrQty, 
-              unitPrice: 0.5 
-            });
-            items = [...items, sgrItem];
-          }
+          // Recalculate and add SGR tax items
+          items = addSgrTaxItems(items);
           
           const next = recalcState(items, state.cashGiven);
           return {
@@ -244,6 +293,14 @@ export const useCartStore = create<CartStore>()(
             lastAction: `Adăugat ${item.product.name}`
           };
         });
+        
+        // Update SGR items on server if needed
+        if (item.product.sgr) {
+          getConfig().then(config => {
+            updateSgrItems(get().items, config);
+          });
+        }
+        
         return { itemId: item.id };
       },
       selectItem: (id) =>
@@ -308,11 +365,8 @@ export const useCartStore = create<CartStore>()(
           // Update local state with the server response
           return new Promise<{ success: boolean; error?: string; data?: any }>((resolve) => {
             set((state) => {
-              // Remove existing SGR tax items temporarily
-              let items = state.items.filter(i => i.product.id !== 'sgr-tax');
-              
               // Update the item with server data - use ?? with original updatedItem values
-              items = updateCartItem(items, id, (item) => {
+              let items = updateCartItem(state.items, id, (item) => {
                 const serverData = apiResponse.data;
                 return {
                   ...item,
@@ -329,29 +383,8 @@ export const useCartStore = create<CartStore>()(
                 };
               });
               
-              // Calculate total SGR quantity from all SGR products
-              let totalSgrQty = 0;
-              for (const i of items) {
-                if (i.product.sgr && !i.storno) {
-                  totalSgrQty += i.qty;
-                }
-              }
-              
-              // Add SGR tax item at the end if needed
-              if (totalSgrQty > 0) {
-                const sgrProduct: Product = {
-                  id: 'sgr-tax',
-                  upc: 'SGR-TAX',
-                  name: 'Taxa SGR',
-                  price: 0.5
-                };
-                const sgrItem = createCartItem({ 
-                  product: sgrProduct, 
-                  qty: totalSgrQty, 
-                  unitPrice: 0.5 
-                });
-                items = [...items, sgrItem];
-              }
+              // Recalculate and add SGR tax items
+              items = addSgrTaxItems(items);
               
               const next = recalcState(items, state.cashGiven);
               resolve({ success: true, data: apiResponse.data });
@@ -361,6 +394,9 @@ export const useCartStore = create<CartStore>()(
                 lastAction: `Actualizat linia`
               };
             });
+            
+            // Update SGR items on server
+            updateSgrItems(get().items, config);
           });
         } catch (error) {
           return { success: false, error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` };
@@ -375,7 +411,7 @@ export const useCartStore = create<CartStore>()(
         if (!itemToDelete) return { success: false, error: 'Item not found' };
         
         // Send delete to server (don't delete SGR tax from server)
-        if (itemToDelete.product.id !== 'sgr-tax') {
+        if (!['1112', '1113', '1114'].includes(itemToDelete.product.id)) {
           try {
             const config = await getConfig();
             const baseUrl = config.middleware?.apiBaseUrl || '';
@@ -408,32 +444,8 @@ export const useCartStore = create<CartStore>()(
             // Remove the item
             let items = removeCartItem(state.items, id);
             
-            // Remove existing SGR tax items
-            items = items.filter(i => i.product.id !== 'sgr-tax');
-            
-            // Calculate total SGR quantity from all SGR products
-            let totalSgrQty = 0;
-            for (const i of items) {
-              if (i.product.sgr && !i.storno) {
-                totalSgrQty += i.qty;
-              }
-            }
-            
-            // Add SGR tax item at the end if needed
-            if (totalSgrQty > 0) {
-              const sgrProduct: Product = {
-                id: 'sgr-tax',
-                upc: 'SGR-TAX',
-                name: 'Taxa SGR',
-                price: 0.5
-              };
-              const sgrItem = createCartItem({ 
-                product: sgrProduct, 
-                qty: totalSgrQty, 
-                unitPrice: 0.5 
-              });
-              items = [...items, sgrItem];
-            }
+            // Recalculate and add SGR tax items
+            items = addSgrTaxItems(items);
             
             const next = recalcState(items, state.cashGiven);
             resolve({ success: true });
@@ -444,13 +456,18 @@ export const useCartStore = create<CartStore>()(
               lastAction: `Produs șters`
             };
           });
+          
+          // Update SGR items on server
+          getConfig().then(config => {
+            updateSgrItems(get().items, config);
+          });
         });
       },
       moveItemUp: (id) =>
         set((state) => {
-          // Don't allow moving SGR tax item
+          // Don't allow moving SGR tax items
           const item = state.items.find(i => i.id === id);
-          if (item?.product.id === 'sgr-tax') return state;
+          if (['1112', '1113', '1114'].includes(item?.product.id || '')) return state;
           
           return {
             ...state,
@@ -460,9 +477,9 @@ export const useCartStore = create<CartStore>()(
         }),
       moveItemDown: (id) =>
         set((state) => {
-          // Don't allow moving SGR tax item
+          // Don't allow moving SGR tax items
           const item = state.items.find(i => i.id === id);
-          if (item?.product.id === 'sgr-tax') return state;
+          if (['1112', '1113', '1114'].includes(item?.product.id || '')) return state;
           
           return {
             ...state,
@@ -472,40 +489,22 @@ export const useCartStore = create<CartStore>()(
         }),
       toggleStorno: (id) =>
         set((state) => {
-          // Remove existing SGR tax items temporarily
-          let items = state.items.filter(i => i.product.id !== 'sgr-tax');
-          
           // Toggle storno on the item
-          items = updateCartItem(items, id, (item) => ({
+          let items = updateCartItem(state.items, id, (item) => ({
             ...item,
             storno: !item.storno
           }));
           
-          // Calculate total SGR quantity from all SGR products (excluding storno)
-          let totalSgrQty = 0;
-          for (const i of items) {
-            if (i.product.sgr && !i.storno) {
-              totalSgrQty += i.qty;
-            }
-          }
-          
-          // Add SGR tax item at the end if needed
-          if (totalSgrQty > 0) {
-            const sgrProduct: Product = {
-              id: 'sgr-tax',
-              upc: 'SGR-TAX',
-              name: 'Taxa SGR',
-              price: 0.5
-            };
-            const sgrItem = createCartItem({ 
-              product: sgrProduct, 
-              qty: totalSgrQty, 
-              unitPrice: 0.5 
-            });
-            items = [...items, sgrItem];
-          }
+          // Recalculate and add SGR tax items
+          items = addSgrTaxItems(items);
           
           const next = recalcState(items, state.cashGiven);
+          
+          // Update SGR items on server
+          getConfig().then(config => {
+            updateSgrItems(items, config);
+          });
+          
           return {
             ...state,
             ...next,

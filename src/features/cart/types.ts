@@ -15,7 +15,7 @@ export interface Product {
   name: string;
   price: number;
   vatRate?: number;
-  sgr?: boolean;
+  sgr?: string; // SGR type: "PET", "Sticla", "Doza"
 }
 
 export interface CartItem {
@@ -26,7 +26,6 @@ export interface CartItem {
   percentDiscount?: number;
   valueDiscount?: number;
   storno?: boolean;
-  sgr?: boolean;
 }
 
 export interface CartState {

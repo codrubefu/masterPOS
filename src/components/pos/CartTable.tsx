@@ -149,17 +149,8 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
       </header>
    
       <div className="mt-4 flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-        <table className="w-full" role="grid">
-          <thead className="sticky top-0 z-10 bg-slate-100 text-xs uppercase text-gray-500">
-            <tr>
-              <th className="py-2 px-3 text-left">Articol</th>
-              <th className="py-2 px-3 text-right">Cant</th>
-              <th className="py-2 px-3 text-right">-%</th>
-              <th className="py-2 px-3 text-right">Preț</th>
-              <th className="py-2 px-3 text-right">Valoare</th>
-              <th className="py-2 px-3 text-right" aria-label="Acțiuni" />
-            </tr>
-          </thead>
+        <table className="w-full mb-6" role="grid">
+       
           <tbody className="divide-y divide-slate-100 text-sm">
             {items.length === 0 ? (
               <tr>
@@ -168,61 +159,100 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                 </td>
               </tr>
             ) : (
-              items.map((item) => {
+              items.map((item, index) => {
                 const totals = calculateLineTotals(item);
                 const isSelected = item.id === selectedId;
+                const isEven = index % 2 === 0;
                 return (
-                  <tr
-                    key={item.id}
-                    role="row"
-                    aria-selected={isSelected}
-                    className={clsx(
-                      "transition-colors",
-                      isSelected ? "bg-indigo-50/80" : "hover:bg-slate-50"
-                    )}
-                    onClick={() => onSelect(item.id)}
-                  >
-                    <td className="px-3 py-3">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900">{item.product.name}</span>
-                        <span className="text-xs text-gray-500">UPC: {item.product.upc}</span>
-                        {item.storno && <span className="mt-1 text-xs font-semibold text-red-500">STORNO</span>}
-                        {item.product.sgr && <span className="mt-1 text-xs font-semibold text-green-600">🔄 Bon ambalaj</span>}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums">{item.qty.toFixed(2)}</td>
-                    <td className="px-3 py-3 text-right tabular-nums">
-                      {item.valueDiscount ? "-" : `${item.percentDiscount ?? 0}%`}
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums">{formatMoney(item.unitPrice)}</td>
-                    <td className="px-3 py-3 text-right tabular-nums font-semibold">
-                      {formatMoney(totals.total)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={async (event) => {
-                            event.stopPropagation();
-                            await onDelete(item.id);
-                          }}
-                          className={clsx(rowButtonClass, "bg-red-50 text-red-600 border-red-200")}
-                        >
-                          Șterge
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleEditItem(item);
-                          }}
-                          className={clsx(rowButtonClass, "bg-green-50 text-green-600 border-green-200")}
-                        >
-                          Modifica
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <>
+                    <tr
+                      key={`${item.id}-header`}
+                      role="row"
+                      aria-selected={isSelected}
+                      className={clsx(
+                        "transition-colors border-t-2",
+                        isSelected 
+                          ? "bg-indigo-50/80 border-t-indigo-200" 
+                          : isEven 
+                            ? "bg-white hover:bg-slate-50 border-t-gray-200" 
+                            : "bg-slate-50/50 hover:bg-slate-100 border-t-gray-200"
+                      )}
+                      onClick={() => onSelect(item.id)}
+                    >
+                      <td colSpan={6} className="px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-slate-900">{item.product.name}</span>
+                          <span className="text-xs text-gray-500">UPC: {item.product.upc}</span>
+                          {item.storno && <span className="text-xs font-semibold text-red-500">STORNO</span>}
+                          {item.product.sgr && <span className="text-xs font-semibold text-green-600">🔄 SGR {item.product.sgr}</span>}
+                        </div>
+                      </td>
+                    </tr>
+                    <tr
+                      className={clsx(
+                        "transition-colors",
+                        isSelected 
+                          ? "bg-indigo-50/80" 
+                          : isEven 
+                            ? "bg-white hover:bg-slate-50" 
+                            : "bg-slate-50/50 hover:bg-slate-100"
+                      )}
+                      onClick={() => onSelect(item.id)}
+                    >
+                      <th className="py-2 px-3 text-right">Cant</th>
+              <th className="py-2 px-3 text-right">-%</th>
+              <th className="py-2 px-3 text-right">Preț</th>
+              <th className="py-2 px-3 text-right">Valoare</th>
+              <th className="py-2 px-3 text-right" aria-label="Acțiuni" />
+                    </tr>
+                    <tr
+                      key={`${item.id}-details`}
+                      role="row"
+                      aria-selected={isSelected}
+                      className={clsx(
+                        "transition-colors border-b-2",
+                        isSelected 
+                          ? "bg-indigo-50/80 border-b-indigo-200" 
+                          : isEven 
+                            ? "bg-white hover:bg-slate-50 border-b-gray-200" 
+                            : "bg-slate-50/50 hover:bg-slate-100 border-b-gray-200"
+                      )}
+                      onClick={() => onSelect(item.id)}
+                    >
+                      <td className="px-3 pb-3 text-right tabular-nums">{item.qty.toFixed(2)}</td>
+                      <td className="px-3 pb-3 text-right tabular-nums">
+                        {item.valueDiscount ? "-" : `${item.percentDiscount ?? 0}%`}
+                      </td>
+                      <td className="px-3 pb-3 text-right tabular-nums">{formatMoney(item.unitPrice)}</td>
+                      <td className="px-3 pb-3 text-right tabular-nums font-semibold">
+                        {formatMoney(totals.total)}
+                      </td>
+                      <td colSpan={2} className="px-3 pb-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={async (event) => {
+                              event.stopPropagation();
+                              await onDelete(item.id);
+                            }}
+                            className={clsx(rowButtonClass, "bg-red-50 text-red-600 border-red-200")}
+                          >
+                            Șterge
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleEditItem(item);
+                            }}
+                            className={clsx(rowButtonClass, "bg-green-50 text-green-600 border-green-200")}
+                          >
+                            Modifica
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </>
                 );
               })
             )}
