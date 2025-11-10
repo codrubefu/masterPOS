@@ -416,12 +416,25 @@ export const useCartStore = create<CartStore>()(
             const config = await getConfig();
             const baseUrl = config.middleware?.apiBaseUrl || '';
             
-            // Send DELETE request to server
+            // Prepare the delete payload with item details
+            const deletePayload = {
+              id: itemToDelete.product.id,
+              upc: itemToDelete.product.upc,
+              name: itemToDelete.product.name,
+              price: itemToDelete.unitPrice,
+              qty: itemToDelete.qty,
+              percentDiscount: itemToDelete.percentDiscount,
+              valueDiscount: itemToDelete.valueDiscount,
+              storno: itemToDelete.storno
+            };
+            
+            // Send DELETE request to server with item data in body
             const response = await fetch(`${baseUrl}/api/articles/${encodeURIComponent(itemToDelete.product.upc)}`, {
               method: 'DELETE',
               headers: {
                 'Content-Type': 'application/json'
-              }
+              },
+              body: JSON.stringify(deletePayload)
             });
             
             if (!response.ok) {
