@@ -53,6 +53,7 @@ interface CartStore extends CartState {
   setCustomer: (customer: Customer) => Promise<{ success: boolean; error?: string }>;
   setPaymentMethod: (method?: PaymentMethod) => void;
   setCasa: (casa: number) => void;
+  setPendingPayment: (payment: { bon_no: number; processed_at: string } | undefined) => void;
   completePayment: (method: PaymentMethod) => Receipt | undefined;
   resetCart: () => void;
 }
@@ -624,6 +625,12 @@ export const useCartStore = create<CartStore>()(
           ...state,
           casa,
           lastAction: `Casa setată la ${casa}`
+        })),
+      setPendingPayment: (payment) =>
+        set((state) => ({
+          ...state,
+          pendingPayment: payment,
+          lastAction: payment ? `Plată în așteptare: Bon ${payment.bon_no}` : state.lastAction
         })),
       setPaymentMethod: (method) =>
         set((state) => ({

@@ -44,4 +44,8 @@ export interface CartState {
   lastAction?: string;
   paymentMethod?: PaymentMethod;
   selectedItemId?: string;
+  pendingPayment?: {
+    bon_no: number;
+    processed_at: string;
+  };
 }

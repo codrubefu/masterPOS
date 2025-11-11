@@ -2,7 +2,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { POS_SHORTCUTS } from "../../lib/shortcuts";
 import { useCartStore } from "../../app/store";
 import { getConfig } from "../../app/configLoader";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PaymentButtonsProps {
   onPayCash: () => void;
@@ -15,7 +15,7 @@ interface PaymentButtonsProps {
 }
 
 export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, onExit, enabled = false, setEnabled }: PaymentButtonsProps) {
-  const { total, items, casa, customer, cashGiven, subtotal, totalDiscount, change, resetCart, cardAmount, numerarAmount } = useCartStore((state) => ({
+  const { total, items, casa, customer, cashGiven, subtotal, totalDiscount, change, resetCart, cardAmount, numerarAmount, setPendingPayment } = useCartStore((state) => ({
     total: state.total,
     items: state.items,
     casa: state.casa,
@@ -27,10 +27,15 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     resetCart: state.resetCart,
     cardAmount: state.cardAmount,
     numerarAmount: state.numerarAmount,
+    setPendingPayment: state.setPendingPayment,
   }));
 
   const [isLoadingSubtotal, setIsLoadingSubtotal] = useState(false);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [pollingIntervalId, setPollingIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [pollingTimeoutId, setPollingTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   // Check if mixed payment is active (both card and numerar have values > 1)
   const isMixedPaymentActive = cardAmount > 1 && numerarAmount > 1;
@@ -57,6 +62,15 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     onExit();
   });
 
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      stopPolling();
+      if (pollingTimeoutId) {
+        clearTimeout(pollingTimeoutId);
+      }
+    };
+  }, [pollingIntervalId, pollingTimeoutId]);
 
   const buttonClass = "h-14 rounded-2xl text-white font-semibold text-base shadow-sm transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400";
 
@@ -133,14 +147,18 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
       
       if (response.ok && data.success) {
         console.log('Payment success:', data);
-        // Reset the entire store (clear cart, customer, payments, etc.)
-        resetCart();
-        // Reset the enabled state
-        if (setEnabled) {
-          setEnabled(false);
+        
+        // Save payment data to store (don't delete storage yet)
+        if (data.data) {
+          setPendingPayment({
+            bon_no: data.data.bon_no,
+            processed_at: data.data.processed_at
+          });
         }
-        // Call the original handler to complete the payment locally
-        originalHandler();
+        
+        // Show popup and start polling
+        setShowPaymentPopup(true);
+        startPolling(baseUrl, originalHandler);
       } else {
         console.error('Payment error:', data.message || 'Eroare la procesarea plății');
       }
@@ -151,40 +169,173 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     }
   };
 
+  const startPolling = (baseUrl: string, originalHandler: () => void) => {
+    let isPollingActive = true;
+    
+    // Set timeout for 10 seconds
+    const timeoutId = setTimeout(() => {
+      isPollingActive = false;
+      setPaymentError('Timpul de așteptare a expirat. Vă rugăm verificați starea plății.');
+      stopPolling();
+    }, 10000);
+    
+    setPollingTimeoutId(timeoutId);
+    
+    const intervalId = setInterval(async () => {
+      // Stop making requests if polling is no longer active
+      if (!isPollingActive) {
+        return;
+      }
+      
+      try {
+        // Get the pending payment from store
+        const pendingPayment = useCartStore.getState().pendingPayment;
+        
+        if (!pendingPayment) {
+          console.error('No pending payment found');
+          isPollingActive = false;
+          stopPolling();
+          return;
+        }
+        
+        const response = await fetch(`${baseUrl}/api/payments/is-payment-done`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bon_no: pendingPayment.bon_no
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          // Payment is done, clean up
+          isPollingActive = false;
+          stopPolling();
+          setShowPaymentPopup(false);
+          setPaymentError(null);
+          
+          // Now delete storage and reset
+          resetCart();
+          setPendingPayment(undefined);
+          
+          // Reset the enabled state
+          if (setEnabled) {
+            setEnabled(false);
+          }
+          
+          // Call the original handler
+          originalHandler();
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }, 500); // Poll every 0.5 seconds
+    
+    setPollingIntervalId(intervalId);
+  };
+
+  const stopPolling = () => {
+    if (pollingIntervalId) {
+      clearInterval(pollingIntervalId);
+      setPollingIntervalId(null);
+    }
+    if (pollingTimeoutId) {
+      clearTimeout(pollingTimeoutId);
+      setPollingTimeoutId(null);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-      <button 
-        type="button" 
-        className={`${buttonClass} bg-amber-500 hover:bg-amber-400`} 
-        onClick={() => handlePayment('mixed', onPayMixed)} 
-        disabled={!enabled || isLoadingPayment || !isMixedPaymentActive}
-      >
-        {isLoadingPayment ? 'Se procesează...' : 'Plata mixtă'}
-      </button>
-      <button 
-        type="button" 
-        className={`${buttonClass} bg-emerald-600 hover:bg-emerald-500`} 
-        onClick={() => handlePayment('cash', onPayCash)} 
-        disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled}
-      >
-        {isLoadingPayment ? 'Se procesează...' : 'Plata numerar'}
-      </button>
-      <button 
-        type="button" 
-        className={`${buttonClass} bg-indigo-600 hover:bg-indigo-500`} 
-        onClick={() => handlePayment('card', onPayCard)} 
-        disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled}
-      >
-        {isLoadingPayment ? 'Se procesează...' : 'Plata card'}
-      </button>
-      <button 
-        type="button" 
-        className={`${buttonClass} bg-gray-700 hover:bg-gray-600 col-span-2 lg:col-span-4`} 
-        onClick={handleSubTotal}
-        disabled={isLoadingSubtotal}
-      >
-        {isLoadingSubtotal ? 'Se procesează...' : `Sub Total (Total: ${total})`}
-      </button>
-    </div>
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <button 
+          type="button" 
+          className={`${buttonClass} bg-amber-500 hover:bg-amber-400`} 
+          onClick={() => handlePayment('mixed', onPayMixed)} 
+          disabled={!enabled || isLoadingPayment || !isMixedPaymentActive}
+        >
+          {isLoadingPayment ? 'Se procesează...' : 'Plata mixtă'}
+        </button>
+        <button 
+          type="button" 
+          className={`${buttonClass} bg-emerald-600 hover:bg-emerald-500`} 
+          onClick={() => handlePayment('cash', onPayCash)} 
+          disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled}
+        >
+          {isLoadingPayment ? 'Se procesează...' : 'Plata numerar'}
+        </button>
+        <button 
+          type="button" 
+          className={`${buttonClass} bg-indigo-600 hover:bg-indigo-500`} 
+          onClick={() => handlePayment('card', onPayCard)} 
+          disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled}
+        >
+          {isLoadingPayment ? 'Se procesează...' : 'Plata card'}
+        </button>
+        <button 
+          type="button" 
+          className={`${buttonClass} bg-gray-700 hover:bg-gray-600 col-span-2 lg:col-span-4`} 
+          onClick={handleSubTotal}
+          disabled={isLoadingSubtotal}
+        >
+          {isLoadingSubtotal ? 'Se procesează...' : `Sub Total (Total: ${total})`}
+        </button>
+      </div>
+
+      {/* Payment Processing Popup */}
+      {showPaymentPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
+            <div className="flex flex-col items-center gap-4">
+              {!paymentError ? (
+                <>
+                  {/* Loader Spinner */}
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-brand-indigo"></div>
+                  
+                  <h2 className="text-xl font-semibold text-slate-900">
+                    Se procesează plata...
+                  </h2>
+                  
+                  <p className="text-sm text-slate-600 text-center">
+                    Vă rugăm așteptați confirmarea plății
+                  </p>
+                </>
+              ) : (
+                <>
+                  {/* Error Icon */}
+                  <div className="flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
+                    <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                  
+                  <h2 className="text-xl font-semibold text-slate-900">
+                    Eroare
+                  </h2>
+                  
+                  <p className="text-sm text-slate-600 text-center">
+                    {paymentError}
+                  </p>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPaymentPopup(false);
+                      setPaymentError(null);
+                    }}
+                    className="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-colors"
+                  >
+                    Închide
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
