@@ -164,15 +164,7 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
         />
       </div>
       <label className="flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-wide text-gray-500">Bonuri valorice</span>
-        <input
-          ref={bonuriValoriceInputRef}
-          className={clsx(inputClass, "bg-white", hasError && "border-red-300")}
-          value={bonuriValorice}
-          inputMode="decimal"
-          data-keyboard="numeric"
-          onChange={(event) => setBonuriValorice(parseNumericInput(event.target.value))}
-        />
+       
       </label>
       <label className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Card</span>

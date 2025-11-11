@@ -15,7 +15,7 @@ interface PaymentButtonsProps {
 }
 
 export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, onExit, enabled = false, setEnabled }: PaymentButtonsProps) {
-  const { total, items, casa, customer, cashGiven, subtotal, totalDiscount, change, resetCart } = useCartStore((state) => ({
+  const { total, items, casa, customer, cashGiven, subtotal, totalDiscount, change, resetCart, cardAmount, numerarAmount } = useCartStore((state) => ({
     total: state.total,
     items: state.items,
     casa: state.casa,
@@ -25,23 +25,30 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     totalDiscount: state.totalDiscount,
     change: state.change,
     resetCart: state.resetCart,
+    cardAmount: state.cardAmount,
+    numerarAmount: state.numerarAmount,
   }));
 
   const [isLoadingSubtotal, setIsLoadingSubtotal] = useState(false);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
 
+  // Check if mixed payment is active (both card and numerar have values > 1)
+  const isMixedPaymentActive = cardAmount > 1 && numerarAmount > 1;
+  // Single payment methods are disabled when mixed payment is active
+  const isSinglePaymentDisabled = isMixedPaymentActive;
+
   useHotkeys(POS_SHORTCUTS.payCash, (event) => {
-    if (!enabled || isLoadingPayment) return;
+    if (!enabled || isLoadingPayment || isSinglePaymentDisabled) return;
     event.preventDefault();
     handlePayment('cash', onPayCash);
   });
   useHotkeys(POS_SHORTCUTS.payCard, (event) => {
-    if (!enabled || isLoadingPayment) return;
+    if (!enabled || isLoadingPayment || isSinglePaymentDisabled) return;
     event.preventDefault();
     handlePayment('card', onPayCard);
   });
   useHotkeys(POS_SHORTCUTS.payMixed, (event) => {
-    if (!enabled || isLoadingPayment) return;
+    if (!enabled || isLoadingPayment || !isMixedPaymentActive) return;
     event.preventDefault();
     handlePayment('mixed', onPayMixed);
   });
@@ -145,12 +152,12 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
       <button 
         type="button" 
         className={`${buttonClass} bg-amber-500 hover:bg-amber-400`} 
         onClick={() => handlePayment('mixed', onPayMixed)} 
-        disabled={!enabled || isLoadingPayment}
+        disabled={!enabled || isLoadingPayment || !isMixedPaymentActive}
       >
         {isLoadingPayment ? 'Se procesează...' : 'Plata mixtă'}
       </button>
@@ -158,7 +165,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         type="button" 
         className={`${buttonClass} bg-emerald-600 hover:bg-emerald-500`} 
         onClick={() => handlePayment('cash', onPayCash)} 
-        disabled={!enabled || isLoadingPayment}
+        disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled}
       >
         {isLoadingPayment ? 'Se procesează...' : 'Plata numerar'}
       </button>
@@ -166,17 +173,9 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         type="button" 
         className={`${buttonClass} bg-indigo-600 hover:bg-indigo-500`} 
         onClick={() => handlePayment('card', onPayCard)} 
-        disabled={!enabled || isLoadingPayment}
+        disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled}
       >
         {isLoadingPayment ? 'Se procesează...' : 'Plata card'}
-      </button>
-      <button 
-        type="button" 
-        className={`${buttonClass} bg-slate-800 hover:bg-slate-700`} 
-        onClick={() => handlePayment('modern', onPayModern)} 
-        disabled={!enabled || isLoadingPayment}
-      >
-        {isLoadingPayment ? 'Se procesează...' : 'Plata modernă'}
       </button>
       <button 
         type="button" 
