@@ -189,8 +189,8 @@ export function PosPage() {
       const result = await addProductByUpc(searchTerm);
       setPaymentButtonsEnabled(false); // Disable payment buttons after product add
       if (result.success) {
-        const lastItem = items.length > 0 ? items[items.length - 1] : null;
-        setCartInfo(`Produs găsit și adăugat: ${lastItem ? lastItem.product.name : searchTerm}`);
+        console.log('Added product result:', result);
+        setCartInfo(`Produs găsit și adăugat: ${result.data ? result.data.name : searchTerm}`);
         setCartError(false);
       } else {
         setCartInfo(result.error || "Produsul nu a putut fi adăugat");

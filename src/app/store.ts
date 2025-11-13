@@ -37,7 +37,7 @@ interface CartStore extends CartState {
   receipts: Receipt[];
   customerOptions: Customer[];
   casa: number; // Casa (register) number: 1, 2, 3, or 4
-  addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => Promise<{ success: boolean; itemId?: string; error?: string }>;
+  addProductByUpc: (upc: string, input?: Partial<AddProductInput>) => Promise<{ success: boolean; data?: Product; itemId?: string; error?: string }>;
   addCustomItem: (input: AddProductInput) => { itemId: string };
   selectItem: (id?: string) => void;
   updateItem: (id: string, updater: (item: CartItem) => CartItem) => Promise<{ success: boolean; error?: string }>;
