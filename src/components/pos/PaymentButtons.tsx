@@ -2,7 +2,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { POS_SHORTCUTS } from "../../lib/shortcuts";
 import { useCartStore } from "../../app/store";
 import { getConfig } from "../../app/configLoader";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface PaymentButtonsProps {
   onPayCash: () => void;
@@ -36,6 +36,10 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [pollingIntervalId, setPollingIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [pollingTimeoutId, setPollingTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  
+  // Use refs to hold the actual timer IDs for immediate cleanup
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if mixed payment is active (both card and numerar have values > 1)
   const isMixedPaymentActive = cardAmount > 1 && numerarAmount > 1;
@@ -66,11 +70,8 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   useEffect(() => {
     return () => {
       stopPolling();
-      if (pollingTimeoutId) {
-        clearTimeout(pollingTimeoutId);
-      }
     };
-  }, [pollingIntervalId, pollingTimeoutId]);
+  }, []);
 
   const buttonClass = "h-14 rounded-2xl text-white font-semibold text-base shadow-sm transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400";
 
@@ -170,6 +171,9 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   };
 
   const startPolling = (baseUrl: string, originalHandler: () => void) => {
+    // Clean up any existing timers first
+    stopPolling();
+    
     let isPollingActive = true;
     
     // Set timeout for 10 seconds
@@ -179,6 +183,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
       stopPolling();
     }, 10000);
     
+    pollingTimeoutRef.current = timeoutId;
     setPollingTimeoutId(timeoutId);
     
     const intervalId = setInterval(async () => {
@@ -211,42 +216,46 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         const data = await response.json();
         
         if (response.ok && data.success) {
-          // Payment is done, clean up
+          // Payment is done, clean up everything immediately
           isPollingActive = false;
           stopPolling();
+          
+          // Reset all state variables
           setShowPaymentPopup(false);
           setPaymentError(null);
+          setIsLoadingPayment(false);
+          setIsLoadingSubtotal(false);
           
-          // Wait 10 seconds before resetting
-          setTimeout(() => {
-            // Now delete storage and reset
-            resetCart();
-            setPendingPayment(undefined);
-            
-            // Reset the enabled state
-            if (setEnabled) {
-              setEnabled(false);
-            }
-            
-            // Call the original handler
-            originalHandler();
-          }, 10000);
+          // Reset cart and pending payment
+          resetCart();
+          setPendingPayment(undefined);
+          
+          // Reset the enabled state
+          if (setEnabled) {
+            setEnabled(false);
+          }
+          
+          // Call the original handler
+          originalHandler();
         }
       } catch (error) {
         console.error('Polling error:', error);
       }
     }, 500); // Poll every 0.5 seconds
     
+    pollingIntervalRef.current = intervalId;
     setPollingIntervalId(intervalId);
   };
 
   const stopPolling = () => {
-    if (pollingIntervalId) {
-      clearInterval(pollingIntervalId);
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
       setPollingIntervalId(null);
     }
-    if (pollingTimeoutId) {
-      clearTimeout(pollingTimeoutId);
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
       setPollingTimeoutId(null);
     }
   };
