@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import { calculateLineTotals } from "../../features/cart/utils";
 import { CartItem } from "../../features/cart/types";
 import { formatMoney } from "../../lib/money";
@@ -165,7 +165,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                 const isSelected = item.id === selectedId;
                 const isEven = index % 2 === 0;
                 return (
-                  <>
+                  <Fragment key={item.id}>
                     <tr
                       key={`${item.id}-header`}
                       role="row"
@@ -253,7 +253,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                         </div>
                       </td>
                     </tr>
-                  </>
+                  </Fragment>
                 );
               })
             )}

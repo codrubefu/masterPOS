@@ -217,17 +217,20 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           setShowPaymentPopup(false);
           setPaymentError(null);
           
-          // Now delete storage and reset
-          resetCart();
-          setPendingPayment(undefined);
-          
-          // Reset the enabled state
-          if (setEnabled) {
-            setEnabled(false);
-          }
-          
-          // Call the original handler
-          originalHandler();
+          // Wait 10 seconds before resetting
+          setTimeout(() => {
+            // Now delete storage and reset
+            resetCart();
+            setPendingPayment(undefined);
+            
+            // Reset the enabled state
+            if (setEnabled) {
+              setEnabled(false);
+            }
+            
+            // Call the original handler
+            originalHandler();
+          }, 10000);
         }
       } catch (error) {
         console.error('Polling error:', error);
@@ -279,7 +282,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           type="button" 
           className={`${buttonClass} bg-gray-700 hover:bg-gray-600 col-span-2 lg:col-span-4`} 
           onClick={handleSubTotal}
-          disabled={isLoadingSubtotal}
+          disabled={enabled || isLoadingSubtotal}
         >
           {isLoadingSubtotal ? 'Se procesează...' : `Sub Total (Total: ${total})`}
         </button>
