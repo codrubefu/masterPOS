@@ -153,7 +153,8 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         if (data.data) {
           setPendingPayment({
             bon_no: data.data.bon_no,
-            processed_at: data.data.processed_at
+            processed_at: data.data.processed_at,
+            type: type
           });
         }
         
@@ -193,8 +194,9 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
       }
       
       try {
-        // Get the pending payment from store
-        const pendingPayment = useCartStore.getState().pendingPayment;
+        // Get all data from store
+        const storeState = useCartStore.getState();
+        const pendingPayment = storeState.pendingPayment;
         
         if (!pendingPayment) {
           console.error('No pending payment found');
@@ -203,14 +205,28 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           return;
         }
         
+        // Prepare payload with all store data including pendingPayment
+        const payloadData = {
+          bon_no: pendingPayment.bon_no,
+          pendingPayment: pendingPayment,
+          items: storeState.items,
+          casa: storeState.casa,
+          customer: storeState.customer,
+          cashGiven: storeState.cashGiven,
+          subtotal: storeState.subtotal,
+          totalDiscount: storeState.totalDiscount,
+          total: storeState.total,
+          change: storeState.change,
+          cardAmount: storeState.cardAmount,
+          numerarAmount: storeState.numerarAmount
+        };
+        
         const response = await fetch(`${baseUrl}/api/payments/is-payment-done`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            bon_no: pendingPayment.bon_no
-          })
+          body: JSON.stringify(payloadData)
         });
         
         const data = await response.json();
