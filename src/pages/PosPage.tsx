@@ -186,15 +186,34 @@ export function PosPage() {
     try {
       setCartInfo("Căutare produs...");
       setCartError(false);
-      const result = await addProductByUpc(searchTerm);
-      setPaymentButtonsEnabled(false); // Disable payment buttons after product add
-      if (result.success) {
-        console.log('Added product result:', result);
-        setCartInfo(`Produs găsit și adăugat: ${result.data ? result.data.name : searchTerm}`);
+      console.log('Searching for product with UPC:', searchTerm);
+      console.log('Current cart items:', items);
+      // Check if product already exists in cart (trim spaces for comparison)
+      const existingItem = items.find(item => 
+        item.product.upc.trim() === searchTerm.trim() && !item.storno
+      );
+      console.log('Existing item in cart:', existingItem);
+      if (existingItem) {
+        // Product exists, use updateItem to increment quantity
+        await updateItem(existingItem.id, (item) => ({
+          ...item,
+          qty: item.qty + 1
+        }));
+        setPaymentButtonsEnabled(false);
+        setCartInfo(`Cantitate actualizată: ${existingItem.product.name}`);
         setCartError(false);
       } else {
-        setCartInfo(result.error || "Produsul nu a putut fi adăugat");
-        setCartError(true);
+        // Product doesn't exist, add new
+        const result = await addProductByUpc(searchTerm);
+        setPaymentButtonsEnabled(false); // Disable payment buttons after product add
+        if (result.success) {
+          console.log('Added product result:', result);
+          setCartInfo(`Produs găsit și adăugat: ${result.data ? result.data.name : searchTerm}`);
+          setCartError(false);
+        } else {
+          setCartInfo(result.error || "Produsul nu a putut fi adăugat");
+          setCartError(true);
+        }
       }
     } catch (error) {
       console.error('Search error:', error);
