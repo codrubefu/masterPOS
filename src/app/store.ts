@@ -658,19 +658,6 @@ export const useCartStore = create<CartStore>()(
         return receipt;
       },
       resetCart: () => {
-        // Call the API reset endpoint
-        getConfig().then(config => {
-          const baseUrl = config.middleware?.apiBaseUrl || '';
-          const casa = get().casa;
-          fetch(`${baseUrl}/api/reset?casa=${casa}`, {
-            method: 'GET'
-          }).catch(err => {
-            console.error('Failed to call /api/reset:', err);
-          });
-        }).catch(err => {
-          console.error('Failed to get config for reset:', err);
-        });
-        
         // Reset the cart state
         set((state) => ({
           ...state,
