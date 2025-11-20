@@ -1,0 +1,6 @@
+{
+    "middleware": {
+        "apiBaseUrl": "http://95.77.98.62:8745/middleware"
+    },
+    "casa": [1, 2, 3, 4]
+}
