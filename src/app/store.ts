@@ -246,7 +246,7 @@ export const useCartStore = create<CartStore>()(
             id: String(apiResponse.data.id),
             name: apiResponse.data.name,
             upc: apiResponse.data.upc,
-            price: apiResponse.data.price,
+            price: Number(apiResponse.data.price),
             sgr: apiResponse.data.sgr,
           };
           const qty = input?.qty ?? 1;
@@ -386,10 +386,10 @@ export const useCartStore = create<CartStore>()(
                   product: {
                     ...item.product,
                     name: serverData.name ?? item.product.name,
-                    price: serverData.price ?? item.product.price,
+                    price: Number(serverData.price ?? item.product.price),
                   },
                   qty: serverData.qty ?? updatedItem.qty,
-                  unitPrice: serverData.price ?? updatedItem.unitPrice,
+                  unitPrice: Number(serverData.price ?? updatedItem.unitPrice),
                   percentDiscount: serverData.percentDiscount ?? updatedItem.percentDiscount,
                   valueDiscount: serverData.valueDiscount ?? updatedItem.valueDiscount,
                   storno: serverData.storno ?? updatedItem.storno
@@ -657,11 +657,26 @@ export const useCartStore = create<CartStore>()(
         });
         return receipt;
       },
-      resetCart: () =>
+      resetCart: () => {
+        // Call the API reset endpoint
+        getConfig().then(config => {
+          const baseUrl = config.middleware?.apiBaseUrl || '';
+          const casa = get().casa;
+          fetch(`${baseUrl}/api/reset?casa=${casa}`, {
+            method: 'GET'
+          }).catch(err => {
+            console.error('Failed to call /api/reset:', err);
+          });
+        }).catch(err => {
+          console.error('Failed to get config for reset:', err);
+        });
+        
+        // Reset the cart state
         set((state) => ({
           ...state,
           ...initialState
-        }))
+        }));
+      }
     }),
     {
       name: "pos-cart-state",

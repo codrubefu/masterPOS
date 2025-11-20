@@ -15,10 +15,10 @@ export async function fetchProductInfoByUpc(upc: string) {
                     id: String(apiResponse.data.id),
                     name: apiResponse.data.name,
                     upc: apiResponse.data.upc,
-                    price: apiResponse.data.price,
+                    price: Number(apiResponse.data.price),
                 },
                 qty: 1,
-                unitPrice: apiResponse.data.price,
+                unitPrice: Number(apiResponse.data.price),
                 percentDiscount: 0,
                 valueDiscount: 0,
                 storno: false

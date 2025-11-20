@@ -10,7 +10,9 @@ export function roundMoney(value: number, precision = 2): number {
 }
 
 export function formatMoney(value: number): string {
-  return formatter.format(roundMoney(value));
+  // Safeguard against NaN or invalid values
+  const numValue = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  return formatter.format(roundMoney(numValue));
 }
 
 export function parseNumericInput(value: string | number | undefined): number {

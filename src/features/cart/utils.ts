@@ -14,12 +14,12 @@ export interface AddProductInput {
 
 export function createCartItem(input: AddProductInput): CartItem {
   const qty = Math.max(input.qty ?? 1, 0.0001);
-  const unitPrice = input.unitPrice ?? input.product.price;
+  const unitPrice = Number(input.unitPrice ?? input.product.price);
   return {
     id: nanoid(),
     product: input.product,
     qty,
-    unitPrice,
+    unitPrice: Number.isFinite(unitPrice) ? unitPrice : 0,
     percentDiscount: input.valueDiscount ? undefined : normalizePercent(input.percentDiscount),
     valueDiscount: input.valueDiscount ? Math.max(input.valueDiscount, 0) : undefined,
     storno: input.storno ?? false,
