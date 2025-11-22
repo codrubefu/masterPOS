@@ -138,6 +138,7 @@ async function updateSgrItems(items: CartItem[], config: any, casa: number) {
         quantity: sgr.qty,
         sgr: ''.padEnd(50),
         departament: '',
+        isSgr: true,
         casa
       };
       
@@ -350,6 +351,7 @@ export const useCartStore = create<CartStore>()(
             valueDiscount: updatedItem.valueDiscount,
             storno: updatedItem.storno,
             departament: updatedItem.product.departament,
+            isSgr: ['1112', '1113', '1114'].includes(updatedItem.product.id),
             casa
           };
           
@@ -445,6 +447,7 @@ export const useCartStore = create<CartStore>()(
               valueDiscount: itemToDelete.valueDiscount,
               storno: itemToDelete.storno,
               departament: itemToDelete.product.departament,
+              isSgr: ['1112', '1113', '1114'].includes(itemToDelete.product.id),
               casa
             };
             
