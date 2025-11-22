@@ -137,6 +137,7 @@ async function updateSgrItems(items: CartItem[], config: any, casa: number) {
         price: 0.5,
         quantity: sgr.qty,
         sgr: ''.padEnd(50),
+        departament: '',
         casa
       };
       
@@ -248,6 +249,7 @@ export const useCartStore = create<CartStore>()(
             upc: apiResponse.data.upc,
             price: Number(apiResponse.data.price),
             sgr: apiResponse.data.sgr,
+            departament: apiResponse.data.departament,
           };
           const qty = input?.qty ?? 1;
           const overrides = {
@@ -347,6 +349,7 @@ export const useCartStore = create<CartStore>()(
             percentDiscount: updatedItem.percentDiscount,
             valueDiscount: updatedItem.valueDiscount,
             storno: updatedItem.storno,
+            departament: updatedItem.product.departament,
             casa
           };
           
@@ -387,6 +390,7 @@ export const useCartStore = create<CartStore>()(
                     ...item.product,
                     name: serverData.name ?? item.product.name,
                     price: Number(serverData.price ?? item.product.price),
+                    departament: serverData.departament ?? item.product.departament,
                   },
                   qty: serverData.qty ?? updatedItem.qty,
                   unitPrice: Number(serverData.price ?? updatedItem.unitPrice),
@@ -440,6 +444,7 @@ export const useCartStore = create<CartStore>()(
               percentDiscount: itemToDelete.percentDiscount,
               valueDiscount: itemToDelete.valueDiscount,
               storno: itemToDelete.storno,
+              departament: itemToDelete.product.departament,
               casa
             };
             

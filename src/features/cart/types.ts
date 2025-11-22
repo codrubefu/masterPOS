@@ -16,6 +16,7 @@ export interface Product {
   price: number;
   vatRate?: number;
   sgr?: string; // SGR type: "PET", "Sticla", "Doza"
+  departament?: string;
 }
 
 export interface CartItem {
