@@ -123,9 +123,9 @@ async function updateSgrItems(items: CartItem[], config: any, casa: number) {
   
   // Send updates for each SGR type
   const sgrProducts = [
-    { type: 'PET', id: '1112', upc: '1112', name: 'Returnare Garantie SGR PET', qty: sgrQuantities.PET },
-    { type: 'Doza', id: '1113', upc: '1113', name: 'Returnare Garantie SGR Doza', qty: sgrQuantities.Doza },
-    { type: 'Sticla', id: '1114', upc: '1114', name: 'Returnare Garantie SGR Sticla', qty: sgrQuantities.Sticla }
+    { type: 'PET', id: '1112', upc: '1112', name: 'Returnare Garantie SGR PET', qty: sgrQuantities.PET , departament: '3'},
+    { type: 'Doza', id: '1113', upc: '1113', name: 'Returnare Garantie SGR Doza', qty: sgrQuantities.Doza ,departament: '3'},
+    { type: 'Sticla', id: '1114', upc: '1114', name: 'Returnare Garantie SGR Sticla', qty: sgrQuantities.Sticla , departament: '3'}
   ];
   
   for (const sgr of sgrProducts) {
@@ -137,7 +137,7 @@ async function updateSgrItems(items: CartItem[], config: any, casa: number) {
         price: 0.5,
         quantity: sgr.qty,
         sgr: ''.padEnd(50),
-        departament: '',
+        departament: 3,
         isSgr: true,
         casa
       };
