@@ -18,6 +18,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isLoadingZ, setIsLoadingZ] = useState(false);
   const [isLoadingReset, setIsLoadingReset] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [inchidereStep, setInchidereStep] = useState<'initial' | 'showX' | 'showZ'>('initial');
 
   // Load casa options from config
   useEffect(() => {
@@ -61,6 +62,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       
       if (response.ok && data.success) {
         setMessage({ type: 'success', text: data.message || 'Raportul Z a fost generat cu succes!' });
+        // Reset back to initial state to show "Închidere zi" button again
+        setInchidereStep('initial');
       } else {
         setMessage({ type: 'error', text: data.message || 'Eroare la generarea raportului Z' });
       }
@@ -94,6 +97,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       
       if (response.ok && data.success) {
         setMessage({ type: 'success', text: data.message || 'Raportul X a fost generat cu succes!' });
+        // If successful, move to show Z step
+        setInchidereStep('showZ');
       } else {
         setMessage({ type: 'error', text: data.message || 'Eroare la generarea raportului X' });
       }
@@ -133,6 +138,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     } finally {
       setIsLoadingReset(false);
     }
+  };
+
+  const handleInchidereZi = () => {
+    setMessage(null);
+    setInchidereStep('showX');
   };
 
   // Close modal on Escape key
@@ -236,58 +246,76 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 Rapoarte
               </label>
               <div className="space-y-3">
-                <button
-                  onClick={handleRaportZ}
-                  disabled={isLoadingZ}
-                  className={`w-full flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 ${
-                    isLoadingZ
-                      ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'border-green-200 bg-green-50 text-green-700 hover:border-green-300 hover:bg-green-100'
-                  }`}
-                >
-                  {isLoadingZ ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span className="font-medium">Se generează...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <span className="font-medium">Raportul Z</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleRaportX}
-                  disabled={isLoadingX}
-                  className={`w-full flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 ${
-                    isLoadingX
-                      ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'border-orange-200 bg-orange-50 text-orange-700 hover:border-orange-300 hover:bg-orange-100'
-                  }`}
-                >
-                  {isLoadingX ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span className="font-medium">Se generează...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <span className="font-medium">Raportul X</span>
-                    </>
-                  )}
-                </button>
+                {inchidereStep === 'initial' && (
+                  <button
+                    onClick={handleInchidereZi}
+                    className="w-full flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 border-purple-200 bg-purple-50 text-purple-700 hover:border-purple-300 hover:bg-purple-100"
+                  >
+                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="font-medium">Închidere zi</span>
+                  </button>
+                )}
+                
+                {inchidereStep === 'showX' && (
+                  <button
+                    onClick={handleRaportX}
+                    disabled={isLoadingX}
+                    className={`w-full flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 ${
+                      isLoadingX
+                        ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'border-orange-200 bg-orange-50 text-orange-700 hover:border-orange-300 hover:bg-orange-100'
+                    }`}
+                  >
+                    {isLoadingX ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="font-medium">Se generează...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="font-medium">Raportul X</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                
+                {inchidereStep === 'showZ' && (
+                  <button
+                    onClick={handleRaportZ}
+                    disabled={isLoadingZ}
+                    className={`w-full flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 ${
+                      isLoadingZ
+                        ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'border-green-200 bg-green-50 text-green-700 hover:border-green-300 hover:bg-green-100'
+                    }`}
+                  >
+                    {isLoadingZ ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="font-medium">Se generează...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="font-medium">Raportul Z</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                
                 <button
                   onClick={handleResetCasa}
                   disabled={isLoadingReset}
