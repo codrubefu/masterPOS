@@ -188,7 +188,8 @@ function addSgrTaxItems(items: CartItem[], casa?: number): CartItem[] {
       id: '1112',
       upc: '1112',
       name: 'Returnare Garantie SGR PET',
-      price: 0.5
+      price: 0.5,
+      departament: '3'
     };
     items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.PET, unitPrice: 0.5, casa }));
   }
@@ -198,7 +199,8 @@ function addSgrTaxItems(items: CartItem[], casa?: number): CartItem[] {
       id: '1113',
       upc: '1113',
       name: 'Returnare Garantie SGR Doza',
-      price: 0.5
+      price: 0.5,
+      departament: '3'
     };
     items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Doza, unitPrice: 0.5, casa }));
   }
@@ -208,7 +210,8 @@ function addSgrTaxItems(items: CartItem[], casa?: number): CartItem[] {
       id: '1114',
       upc: '1114',
       name: 'Returnare Garantie SGR Sticla',
-      price: 0.5
+      price: 0.5,
+      departament: '3'
     };
     items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Sticla, unitPrice: 0.5, casa }));
   }
