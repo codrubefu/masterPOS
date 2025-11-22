@@ -7,6 +7,12 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
+// PWA install prompt interface
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { casa, setCasa } = useCartStore((state) => ({
     casa: state.casa,
@@ -19,6 +25,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isLoadingReset, setIsLoadingReset] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [inchidereStep, setInchidereStep] = useState<'initial' | 'showX' | 'showZ'>('initial');
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   // Load casa options from config
   useEffect(() => {
@@ -36,6 +44,40 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
     loadConfig();
   }, []);
+
+  // PWA install prompt handler
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      return;
+    }
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === 'accepted') {
+      setMessage({ type: 'success', text: 'Aplicația a fost instalată cu succes!' });
+      setDeferredPrompt(null);
+      setIsInstalled(true);
+    }
+  };
 
   const handleCasaSelect = (selectedCasa: number) => {
     setCasa(selectedCasa);
@@ -344,6 +386,38 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </button>
               </div>
             </div>
+
+            {/* PWA Installation Section */}
+            {!isInstalled && deferredPrompt && (
+              <div className="mt-8">
+                <label className="block text-sm font-medium text-gray-700 mb-4">
+                  Instalare Aplicație
+                </label>
+                <button
+                  onClick={handleInstallClick}
+                  className="w-full flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-200 border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
+                >
+                  <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span className="font-medium">Instalează masterPOS</span>
+                </button>
+                <p className="mt-2 text-xs text-gray-500 text-center">
+                  Instalează aplicația pentru acces rapid și funcționare offline
+                </p>
+              </div>
+            )}
+
+            {isInstalled && (
+              <div className="mt-8">
+                <div className="flex items-center justify-center p-3 rounded-lg border-2 border-green-200 bg-green-50 text-green-700">
+                  <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-medium">Aplicația este instalată</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
