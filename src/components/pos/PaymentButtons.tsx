@@ -333,31 +333,41 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
                 </>
               ) : (
                 <>
-                  {/* Error Icon */}
-                  <div className="flex items-center justify-center h-16 w-16 rounded-full bg-red-100">
-                    <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                
+                  
+                  <div className="flex flex-col gap-3 mt-6 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Reset everything and move to next client
+                        setShowPaymentPopup(false);
+                        setPaymentError(null);
+                        setIsLoadingPayment(false);
+                        setIsLoadingSubtotal(false);
+                        resetCart();
+                        setPendingPayment(undefined);
+                        if (setEnabled) {
+                          setEnabled(false);
+                        }
+                      }}
+                      className="w-full px-4 py-6 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
+                    >
+                      Următorul client
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Just close the popup to allow retry
+                        setShowPaymentPopup(false);
+                        setPaymentError(null);
+                        setIsLoadingPayment(false);
+                      }}
+                      className="w-full px-2 py-2 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-colors"
+                    >
+                      A apărut o eroare
+                    </button>
                   </div>
-                  
-                  <h2 className="text-xl font-semibold text-slate-900">
-                    Eroare
-                  </h2>
-                  
-                  <p className="text-sm text-slate-600 text-center">
-                    {paymentError}
-                  </p>
-                  
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPaymentPopup(false);
-                      setPaymentError(null);
-                    }}
-                    className="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white font-medium rounded-lg transition-colors"
-                  >
-                    Închide
-                  </button>
                 </>
               )}
             </div>
