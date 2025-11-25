@@ -110,9 +110,9 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
           <span className="text-xs uppercase tracking-wide text-gray-500">Card ID</span>
           <input
             ref={idRef}
-            type="number"
-            inputMode="numeric"
-            data-keyboard="numeric"
+            type="text"
+            inputMode="text"
+            data-keyboard="text"
             value={searchCardId}
             onChange={(event) => setSearchCardId(event.target.value)}
             onKeyDown={handleKeyDown}

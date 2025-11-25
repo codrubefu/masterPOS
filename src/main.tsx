@@ -3,12 +3,15 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "./app/routes";
 import { useCartStore } from "./app/store";
+import { getConfig } from "./app/configLoader";
 import "./styles/globals.css";
 
 // Initialize casa from config
 async function initializeCasa() {
   try {
-    const response = await fetch('http://localhost:8082/api/config');
+    const config = await getConfig();
+    const apiBaseUrl = config.middleware?.apiBaseUrl || 'http://localhost:8082';
+    const response = await fetch(`${apiBaseUrl}/api/config`);
     if (response.ok) {
       const data = await response.json();
       if (data.casa) {
