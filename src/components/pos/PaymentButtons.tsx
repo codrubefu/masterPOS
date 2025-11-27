@@ -15,7 +15,7 @@ interface PaymentButtonsProps {
 }
 
 export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, onExit, enabled = false, setEnabled }: PaymentButtonsProps) {
-  const { total, items, casa, customer, cashGiven, subtotal, totalDiscount, change, resetCart, cardAmount, numerarAmount, setPendingPayment } = useCartStore((state) => ({
+  const { total, items, casa, customer, cashGiven, subtotal, totalDiscount, change, resetCart, cardAmount, numerarAmount, setPendingPayment, pendingPayment } = useCartStore((state) => ({
     total: state.total,
     items: state.items,
     casa: state.casa,
@@ -28,6 +28,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     cardAmount: state.cardAmount,
     numerarAmount: state.numerarAmount,
     setPendingPayment: state.setPendingPayment,
+    pendingPayment: state.pendingPayment,
   }));
 
   const [isLoadingSubtotal, setIsLoadingSubtotal] = useState(false);
@@ -133,7 +134,8 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         subtotal,
         totalDiscount,
         total,
-        change
+        change,
+        ...(pendingPayment ? { pendingPayment } : {})
       };
       
       const response = await fetch(`${baseUrl}/api/payments/payment`, {
