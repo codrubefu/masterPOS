@@ -127,7 +127,10 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
       // Prepare the payment payload with all store data and type
       const paymentPayload = {
         type,
-        items,
+        items: items.map(item => ({
+          ...item,
+          product: { ...item.product }
+        })),
         casa,
         customer,
         cashGiven,

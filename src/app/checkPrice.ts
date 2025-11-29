@@ -11,12 +11,18 @@ export async function fetchProductInfoByUpc(upc: string) {
         if (apiResponse.success && apiResponse.data) {
             return {
                 id: String(apiResponse.data.id),
-                product: {
-                    id: String(apiResponse.data.id),
-                    name: apiResponse.data.name,
-                    upc: apiResponse.data.upc,
-                    price: Number(apiResponse.data.price),
-                },
+                    product: {
+                        id: String(apiResponse.data.id),
+                        name: apiResponse.data.name,
+                        upc: apiResponse.data.upc,
+                        price: Number(apiResponse.data.price),
+                        departament: apiResponse.data.departament,
+                        gest: apiResponse.data.gest,
+                        tax1: apiResponse.data.tax1,
+                        tax2: apiResponse.data.tax2,
+                        tax3: apiResponse.data.tax3,
+                        sgr: apiResponse.data.sgr,
+                    },
                 qty: 1,
                 unitPrice: Number(apiResponse.data.price),
                 percentDiscount: 0,

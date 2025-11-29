@@ -123,9 +123,9 @@ async function updateSgrItems(items: CartItem[], config: any, casa: number) {
   
   // Send updates for each SGR type
   const sgrProducts = [
-    { type: 'PET', id: '1112', upc: '1112', name: 'Garantie SGR PET', qty: sgrQuantities.PET , departament: '3'},
-    { type: 'Doza', id: '1113', upc: '1113', name: 'Garantie SGR Doza', qty: sgrQuantities.Doza ,departament: '3'},
-    { type: 'Sticla', id: '1114', upc: '1114', name: 'Garantie SGR Sticla', qty: sgrQuantities.Sticla , departament: '3'}
+  { type: 'PET', id: '1112', upc: '1112', name: 'Garantie SGR PET', qty: sgrQuantities.PET , departament: 3},
+  { type: 'Doza', id: '1113', upc: '1113', name: 'Garantie SGR Doza', qty: sgrQuantities.Doza ,departament: 3},
+  { type: 'Sticla', id: '1114', upc: '1114', name: 'Garantie SGR Sticla', qty: sgrQuantities.Sticla , departament: 3}
   ];
   
   for (const sgr of sgrProducts) {
@@ -252,8 +252,12 @@ export const useCartStore = create<CartStore>()(
             name: apiResponse.data.name,
             upc: apiResponse.data.upc,
             price: Number(apiResponse.data.price),
-            sgr: apiResponse.data.sgr,
             departament: apiResponse.data.departament,
+            gest: apiResponse.data.gest,
+            tax1: apiResponse.data.tax1,
+            tax2: apiResponse.data.tax2,
+            tax3: apiResponse.data.tax3,
+            sgr: apiResponse.data.sgr,
           };
           const qty = input?.qty ?? 1;
           const overrides = {
@@ -354,6 +358,11 @@ export const useCartStore = create<CartStore>()(
             valueDiscount: updatedItem.valueDiscount,
             storno: updatedItem.storno,
             departament: updatedItem.product.departament,
+            gest: updatedItem.product.gest,
+            tax1: updatedItem.product.tax1,
+            tax2: updatedItem.product.tax2,
+            tax3: updatedItem.product.tax3,
+            sgr: updatedItem.product.sgr,
             isSgr: ['1112', '1113', '1114'].includes(updatedItem.product.id),
             casa
           };

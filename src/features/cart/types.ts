@@ -14,9 +14,13 @@ export interface Product {
   upc: string;
   name: string;
   price: number;
-  vatRate?: number;
-  sgr?: string; // SGR type: "PET", "Sticla", "Doza"
-  departament?: string;
+    vatRate?: number;
+    departament?: number;
+    gest?: string;
+    tax1?: number;
+    tax2?: number;
+    tax3?: number;
+    sgr?: string; // SGR type: "PET", "Sticla", "Doza"
 }
 
 export interface CartItem {
