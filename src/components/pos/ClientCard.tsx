@@ -23,6 +23,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
   const lastNameRef = useRef<HTMLInputElement | null>(null);
   const firstNameRef = useRef<HTMLInputElement | null>(null);
   const discountPercentRef = useRef<HTMLInputElement | null>(null);
+  const nrAutoRef = useRef<HTMLInputElement | null>(null);
   
   const customer = value ?? {
     id: "temp",
@@ -30,7 +31,8 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     lastName: "Persoană fizică",
     firstName: "1",
     cardId: "",
-    discountPercent: 0
+    discountPercent: 0,
+    nrAuto: ""
   };
 
   const handleChange = (field: keyof Customer) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -66,6 +68,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
       { ref: lastNameRef, field: "lastName" as keyof Customer },
       { ref: firstNameRef, field: "firstName" as keyof Customer },
       { ref: discountPercentRef, field: "discountPercent" as keyof Customer },
+      { ref: nrAutoRef, field: "nrAuto" as keyof Customer },
     ];
     
     const handlers = refs.map(({ ref, field }) => {
@@ -166,6 +169,17 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             className={clsx(inputClassName, "bg-gray-50", "[appearance:textfield]")}
             data-keyboard="numeric"
             disabled
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs uppercase tracking-wide text-gray-500">Nr. Auto</span>
+          <input
+            ref={nrAutoRef}
+            value={customer.nrAuto ?? ""}
+            onChange={handleChange("nrAuto")}
+            className={inputClassName}
+            data-keyboard="text"
+            placeholder="Nr. auto"
           />
         </label>
         <div className="flex flex-col gap-1">

@@ -7,6 +7,7 @@ export interface Customer {
   lastName?: string;
   cardId?: string;
   discountPercent?: number;
+  nrAuto?: string;
 }
 
 export interface Product {
@@ -16,6 +17,8 @@ export interface Product {
   price: number;
     vatRate?: number;
     departament?: number;
+    clasa?: string;
+    grupa?: string;
     gest?: string;
     tax1?: number;
     tax2?: number;

@@ -123,22 +123,29 @@ async function updateSgrItems(items: CartItem[], config: any, casa: number) {
   
   // Send updates for each SGR type
   const sgrProducts = [
-  { type: 'PET', id: '1112', upc: '1112', name: 'Garantie SGR PET', qty: sgrQuantities.PET , departament: 3},
-  { type: 'Doza', id: '1113', upc: '1113', name: 'Garantie SGR Doza', qty: sgrQuantities.Doza ,departament: 3},
-  { type: 'Sticla', id: '1114', upc: '1114', name: 'Garantie SGR Sticla', qty: sgrQuantities.Sticla , departament: 3}
+    { type: 'PET', id: '1112', upc: '1112', name: 'Garantie SGR PET', qty: sgrQuantities.PET, departament: 3, price: 0.5, gest: '3', tax1: 0, tax2: 0, tax3: 0, sgr: 'PET', isSgr: false, storno: false, clasa: undefined, grupa: undefined },
+    { type: 'Doza', id: '1113', upc: '1113', name: 'Garantie SGR Doza', qty: sgrQuantities.Doza, departament: 3, price: 0.5, gest: '3', tax1: 0, tax2: 0, tax3: 0, sgr: 'Doza', isSgr: false, storno: false, clasa: undefined, grupa: undefined },
+    { type: 'Sticla', id: '1114', upc: '1114', name: 'Garantie SGR Sticla', qty: sgrQuantities.Sticla, departament: 3, price: 0.5, gest: '3', tax1: 0, tax2: 0, tax3: 0, sgr: 'Sticla', isSgr: false, storno: false, clasa: undefined, grupa: undefined }
   ];
   
   for (const sgr of sgrProducts) {
     if (sgr.qty > 0) {
       const updatePayload = {
-        id: sgr.id.padEnd(20),
-        name: sgr.name.padEnd(40),
-        upc: sgr.upc.padEnd(20),
-        price: 0.5,
-        quantity: sgr.qty,
-        sgr: ''.padEnd(50),
-        departament: 3,
-        isSgr: true,
+        id: sgr.id,
+        upc: sgr.upc,
+        name: sgr.name,
+        price: sgr.price,
+        qty: sgr.qty,
+        storno: sgr.storno,
+        departament: sgr.departament,
+        clasa: sgr.clasa,
+        grupa: sgr.grupa,
+        gest: sgr.gest,
+        tax1: sgr.tax1,
+        tax2: sgr.tax2,
+        tax3: sgr.tax3,
+        sgr: sgr.sgr,
+        isSgr: sgr.isSgr,
         casa
       };
       
@@ -189,7 +196,12 @@ function addSgrTaxItems(items: CartItem[], casa?: number): CartItem[] {
       upc: '1112',
       name: 'Garantie SGR PET',
       price: 0.5,
-      departament: 3
+      departament: 3,
+      gest: '3',
+      sgr: 'PET',
+      tax1: 0,
+      tax2: 0,
+      tax3: 0
     };
     items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.PET, unitPrice: 0.5, casa }));
   }
@@ -200,7 +212,12 @@ function addSgrTaxItems(items: CartItem[], casa?: number): CartItem[] {
       upc: '1113',
       name: 'Garantie SGR Doza',
       price: 0.5,
-  departament: 3
+      departament: 3,
+      gest: '3',
+      sgr: 'Doza',
+      tax1: 0,
+      tax2: 0,
+      tax3: 0
     };
     items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Doza, unitPrice: 0.5, casa }));
   }
@@ -211,7 +228,12 @@ function addSgrTaxItems(items: CartItem[], casa?: number): CartItem[] {
       upc: '1114',
       name: 'Garantie SGR Sticla',
       price: 0.5,
-  departament: 3
+      departament: 3,
+      gest: '3',
+      sgr: 'Sticla',
+      tax1: 0,
+      tax2: 0,
+      tax3: 0
     };
     items.push(createCartItem({ product: sgrProduct, qty: sgrQuantities.Sticla, unitPrice: 0.5, casa }));
   }
@@ -253,6 +275,8 @@ export const useCartStore = create<CartStore>()(
             upc: apiResponse.data.upc,
             price: Number(apiResponse.data.price),
             departament: apiResponse.data.departament,
+            clasa: apiResponse.data.clasa,
+            grupa: apiResponse.data.grupa,
             gest: apiResponse.data.gest,
             tax1: apiResponse.data.tax1,
             tax2: apiResponse.data.tax2,
@@ -358,6 +382,8 @@ export const useCartStore = create<CartStore>()(
             valueDiscount: updatedItem.valueDiscount,
             storno: updatedItem.storno,
             departament: updatedItem.product.departament,
+            clasa: updatedItem.product.clasa,
+            grupa: updatedItem.product.grupa,
             gest: updatedItem.product.gest,
             tax1: updatedItem.product.tax1,
             tax2: updatedItem.product.tax2,
@@ -459,6 +485,13 @@ export const useCartStore = create<CartStore>()(
               valueDiscount: itemToDelete.valueDiscount,
               storno: itemToDelete.storno,
               departament: itemToDelete.product.departament,
+              clasa: itemToDelete.product.clasa,
+              grupa: itemToDelete.product.grupa,
+              gest: itemToDelete.product.gest,
+              tax1: itemToDelete.product.tax1,
+              tax2: itemToDelete.product.tax2,
+              tax3: itemToDelete.product.tax3,
+              sgr: itemToDelete.product.sgr,
               isSgr: ['1112', '1113', '1114'].includes(itemToDelete.product.id),
               casa
             };

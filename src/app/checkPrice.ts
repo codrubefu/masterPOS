@@ -17,6 +17,8 @@ export async function fetchProductInfoByUpc(upc: string) {
                         upc: apiResponse.data.upc,
                         price: Number(apiResponse.data.price),
                         departament: apiResponse.data.departament,
+                        clasa: apiResponse.data.clasa,
+                        grupa: apiResponse.data.grupa,
                         gest: apiResponse.data.gest,
                         tax1: apiResponse.data.tax1,
                         tax2: apiResponse.data.tax2,

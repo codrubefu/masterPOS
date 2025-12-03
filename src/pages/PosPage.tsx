@@ -114,7 +114,9 @@ export function PosPage() {
       id: 'ambalaj',
       upc: `AMB-ambalaj`,
       name: "Bon ambalaje",
-      price: 0.5
+      price: 0.5,
+      clasa: "ZZ-AMBALAJE",
+      grupa: "ZZ-AMBALAJE"
     };
     addCustomItem({ product, qty: 1, unitPrice: 0.5 });
     setToast("Ambalaj adăugat pe bon");
@@ -372,7 +374,7 @@ export function PosPage() {
       <div className="mx-auto flex max-w-[1600px] flex-col gap-6 h-full">
         <header className="flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-4">
-            <p className="text-xs uppercase tracking-wide text-gray-500">masterPOS</p>
+            <p className="text-xs uppercase tracking-wide text-gray-500">Optimizer ThePOS</p>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <span>Casa:</span>
               <span className="font-semibold text-blue-600">{casa}</span>
