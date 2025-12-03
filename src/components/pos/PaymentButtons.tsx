@@ -86,7 +86,14 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
       
       // Prepare the subtotal payload with all store data
       const subtotalPayload = {
-        items,
+        items: items.map(item => ({
+          ...item,
+          product: {
+            ...item.product,
+            clasa: item.product.clasa,
+            grupa: item.product.grupa
+          }
+        })),
         casa,
         customer,
         cashGiven,
@@ -129,7 +136,11 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         type,
         items: items.map(item => ({
           ...item,
-          product: { ...item.product }
+          product: { 
+            ...item.product,
+            clasa: item.product.clasa,
+            grupa: item.product.grupa
+          }
         })),
         casa,
         customer,
@@ -214,7 +225,14 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         const payloadData = {
           bon_no: pendingPayment.bon_no,
           pendingPayment: pendingPayment,
-          items: storeState.items,
+          items: storeState.items.map(item => ({
+            ...item,
+            product: {
+              ...item.product,
+              clasa: item.product.clasa,
+              grupa: item.product.grupa
+            }
+          })),
           casa: storeState.casa,
           customer: storeState.customer,
           cashGiven: storeState.cashGiven,
