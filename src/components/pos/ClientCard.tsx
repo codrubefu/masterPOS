@@ -108,9 +108,9 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
   return (
     <section className="rounded-2xl bg-white shadow-card p-5 flex flex-col gap-4 mb-6">
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="grid grid-cols-1 gap-4 text-sm">
         <label className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-gray-500">Card ID</span>
+          <span className="text-xs uppercase tracking-wide text-gray-500">CUI</span>
           <input
             ref={idRef}
             type="text"
@@ -120,7 +120,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             onChange={(event) => setSearchCardId(event.target.value)}
             onKeyDown={handleKeyDown}
             className={inputClassName}
-            placeholder="Caută card..."
+            placeholder="Caută cui..."
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -141,37 +141,11 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             readOnly
             className={clsx(inputClassName, "bg-gray-50")}
             data-keyboard="text"
-            placeholder="Nume client"
+            placeholder="Nume client "
             disabled
           />
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-gray-500">Prenume</span>
-          <input
-            ref={firstNameRef}
-            value={customer.firstName ?? ""}
-            readOnly
-            className={clsx(inputClassName, "bg-gray-50")}
-            data-keyboard="text"
-            placeholder="Prenume"
-            disabled
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-gray-500">Reducere %</span>
-          <input
-            ref={discountPercentRef}
-            type="number"
-            min={0}
-            max={100}
-            value={customer.discountPercent ?? 0}
-            readOnly
-            className={clsx(inputClassName, "bg-gray-50", "[appearance:textfield]")}
-            data-keyboard="numeric"
-            disabled
-          />
-        </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-1"> 
           <span className="text-xs uppercase tracking-wide text-gray-500">Nr. Auto</span>
           <input
             ref={nrAutoRef}
@@ -182,12 +156,6 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
             placeholder="Nr. auto"
           />
         </label>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-gray-500">ID Intern</span>
-          <div className="h-12 flex items-center rounded-xl border border-gray-200 px-3 text-sm bg-gray-50">
-            {customer.id}
-          </div>
-        </div>
       </div>
     </section>
   );
