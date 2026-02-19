@@ -15,6 +15,12 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ value, onChange }: ClientCardProps) {
+    // Reset searchCardId when cart is reset (client value changes to default)
+    useEffect(() => {
+      if (!value || value.id === "" || value.id === "temp") {
+        setSearchCardId("");
+      }
+    }, [value]);
   // Local state for card ID search
   const [searchCardId, setSearchCardId] = useState("");
   
