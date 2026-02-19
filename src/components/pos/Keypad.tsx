@@ -176,7 +176,8 @@ export function Keypad({ open, onClose }: KeypadProps) {
 
   const handleInsert = (text: string) => {
     updateValue((value, start, end) => {
-      const sanitized = mode === "numeric" && text === "," ? "." : text;
+      let sanitized = text;
+      if (mode === "numeric" && (text === "," || text === ".")) sanitized = ".";
       const nextValue = value.slice(0, start) + sanitized + value.slice(end);
       return { value: nextValue, caret: start + sanitized.length };
     });
@@ -357,9 +358,9 @@ export function Keypad({ open, onClose }: KeypadProps) {
               type="button"
               className={clsx(buttonClass, "h-16 text-2xl")}
               onMouseDown={handlePointerDown}
-              onClick={() => handleInsert(",")}
+              onClick={() => handleInsert(".")}
             >
-              ,
+              .
             </button>
             <button
               type="button"
