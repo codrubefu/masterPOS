@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { formatMoney, parseNumericInput } from "../../lib/money";
 import { useCartStore } from "../../app/store";
 
@@ -23,6 +23,9 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
   const setCardAmount = useCartStore((state) => state.setCardAmount);
   const numerarAmount = useCartStore((state) => state.numerarAmount);
   const setNumerarAmount = useCartStore((state) => state.setNumerarAmount);
+
+  const [cardAmountText, setCardAmountText] = useState(cardAmount === 0 ? "" : String(cardAmount));
+  const [numerarAmountText, setNumerarAmountText] = useState(numerarAmount === 0 ? "" : String(numerarAmount));
   
   // Ref for cash given input
   const cashGivenInputRef = useRef<HTMLInputElement | null>(null);
@@ -32,6 +35,25 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
   const bonuriValoriceInputRef = useRef<HTMLInputElement | null>(null);
   const cardAmountInputRef = useRef<HTMLInputElement | null>(null);
   const numerarAmountInputRef = useRef<HTMLInputElement | null>(null);
+
+  const sanitizeDecimalInput = useCallback((value: string) => {
+    const normalized = value.replace(/,/g, ".").replace(/[^\d.]/g, "");
+    const firstDot = normalized.indexOf(".");
+    if (firstDot === -1) return normalized;
+    return normalized.slice(0, firstDot + 1) + normalized.slice(firstDot + 1).replace(/\./g, "");
+  }, []);
+
+  const handleCardAmountChange = useCallback((rawValue: string) => {
+    const sanitized = sanitizeDecimalInput(rawValue);
+    setCardAmountText(sanitized);
+    setCardAmount(parseNumericInput(sanitized));
+  }, [sanitizeDecimalInput, setCardAmount]);
+
+  const handleNumerarAmountChange = useCallback((rawValue: string) => {
+    const sanitized = sanitizeDecimalInput(rawValue);
+    setNumerarAmountText(sanitized);
+    setNumerarAmount(parseNumericInput(sanitized));
+  }, [sanitizeDecimalInput, setNumerarAmount]);
 
   // Sync cashGiven state with native input events (for onscreen keyboard)
   useEffect(() => {
@@ -84,14 +106,14 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
     if (!input) return;
     const handleNativeInput = (e: Event) => {
       if (e.target instanceof HTMLInputElement) {
-        setCardAmount(parseNumericInput(e.target.value));
+        handleCardAmountChange(e.target.value);
       }
     };
     input.addEventListener('input', handleNativeInput);
     return () => {
       input.removeEventListener('input', handleNativeInput);
     };
-  }, [setCardAmount]);
+  }, [handleCardAmountChange]);
 
   // Sync numerarAmount state with native input events (for onscreen keyboard)
   useEffect(() => {
@@ -99,14 +121,22 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
     if (!input) return;
     const handleNativeInput = (e: Event) => {
       if (e.target instanceof HTMLInputElement) {
-        setNumerarAmount(parseNumericInput(e.target.value));
+        handleNumerarAmountChange(e.target.value);
       }
     };
     input.addEventListener('input', handleNativeInput);
     return () => {
       input.removeEventListener('input', handleNativeInput);
     };
-  }, [setNumerarAmount]);
+  }, [handleNumerarAmountChange]);
+
+  useEffect(() => {
+    setCardAmountText(cardAmount === 0 ? "" : String(cardAmount));
+  }, [cardAmount]);
+
+  useEffect(() => {
+    setNumerarAmountText(numerarAmount === 0 ? "" : String(numerarAmount));
+  }, [numerarAmount]);
 
   // Calculate the sum of payment splits
   const paymentSplitSum = bonuriValorice + cardAmount + numerarAmount;
@@ -171,10 +201,10 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
         <input
           ref={cardAmountInputRef}
           className={clsx(inputClass, "bg-white", hasError && "border-red-300")}
-          value={cardAmount}
+          value={cardAmountText}
           inputMode="decimal"
           data-keyboard="numeric"
-          onChange={(event) => setCardAmount(parseNumericInput(event.target.value))}
+          onChange={(event) => handleCardAmountChange(event.target.value)}
         />
       </label>
       <label className="flex flex-col gap-1">
@@ -182,10 +212,10 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
         <input
           ref={numerarAmountInputRef}
           className={clsx(inputClass, "bg-white", hasError && "border-red-300")}
-          value={numerarAmount}
+          value={numerarAmountText}
           inputMode="decimal"
           data-keyboard="numeric"
-          onChange={(event) => setNumerarAmount(parseNumericInput(event.target.value))}
+          onChange={(event) => handleNumerarAmountChange(event.target.value)}
         />
       </label>
     </section>
