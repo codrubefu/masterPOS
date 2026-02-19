@@ -142,6 +142,8 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
             grupa: item.product.grupa
           }
         })),
+        cardAmount,
+        numerarAmount,
         casa,
         customer,
         cashGiven,

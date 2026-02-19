@@ -732,7 +732,9 @@ export const useCartStore = create<CartStore>()(
         selectedItemId: state.selectedItemId,
         receipts: state.receipts,
         paymentMethod: state.paymentMethod,
-        lastAction: state.lastAction
+        lastAction: state.lastAction,
+        cardAmount: state.cardAmount,
+        numerarAmount: state.numerarAmount
       })
     }
   )
