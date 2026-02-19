@@ -18,6 +18,10 @@ export function useGlobalRequestKeyboard(setKeyboardOpen: (open: boolean) => voi
         if (target.readOnly || target.disabled || target.type === 'hidden') {
           return;
         }
+        // Do not open onscreen keyboard for checkbox inputs
+        if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+          return;
+        }
         // Check if this is a request input
         const isRequestInput = target.getAttribute('data-request') === 'true';
         const showOnscreenKeyboard = target.getAttribute('data-show-onscreen-keyboard') === 'true';

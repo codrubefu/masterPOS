@@ -271,6 +271,11 @@ export function PosPage() {
           return;
         }
 
+        // Do not open onscreen keyboard for checkbox inputs
+        if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+          return;
+        }
+
         // Check if this is a request input
         const isRequestInput = target.getAttribute('data-request') === 'true';
         const showOnscreenKeyboard = target.getAttribute('data-show-onscreen-keyboard') === 'true';

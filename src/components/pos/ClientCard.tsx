@@ -35,6 +35,9 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     nrAuto: ""
   };
 
+  // Whether to prepend the "RO" prefix when sending the ID
+  const [useRoPrefix, setUseRoPrefix] = useState(false);
+
   const handleChange = (field: keyof Customer) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (!onChange) return;
     
@@ -49,12 +52,14 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      
+      // Build the final id depending on the RO toggle
+      const finalId = (useRoPrefix ? `RO${searchCardId.trim()}` : searchCardId.trim());
+
       // Trigger the search by calling onChange with the search ID
-      if (onChange && searchCardId.trim()) {
-        onChange({ ...customer, id: searchCardId.trim() });
+      if (onChange && finalId) {
+        onChange({ ...customer, id: finalId });
       }
-      
+
       // Close the onscreen keyboard by blurring the input
       event.currentTarget.blur();
     }
@@ -96,7 +101,9 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     if (!input) return;
     const handleNativeInput = (e: Event) => {
       if (e.target instanceof HTMLInputElement) {
-        setSearchCardId(e.target.value);
+        // Strip any accidental RO typed into the numeric input and keep only the numeric part
+        const val = e.target.value.replace(/^RO/i, "");
+        setSearchCardId(val);
       }
     };
     input.addEventListener('input', handleNativeInput);
@@ -111,17 +118,29 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
       <div className="grid grid-cols-1 gap-4 text-sm">
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">CUI</span>
-          <input
-            ref={idRef}
-            type="text"
-            inputMode="text"
-            data-keyboard="text"
-            value={searchCardId}
-            onChange={(event) => setSearchCardId(event.target.value)}
-            onKeyDown={handleKeyDown}
-            className={inputClassName}
-            placeholder="Caută cui..."
-          />
+          <div className="flex gap-2 items-center">
+            <label className="inline-flex items-center gap-2 text-sm select-none">
+              <input
+                type="checkbox"
+                className="h-5 w-5 rounded border-gray-200"
+                checked={useRoPrefix}
+                onChange={(e) => setUseRoPrefix(e.target.checked)}
+                aria-label="Prefixează cu RO"
+              />
+              <span className="text-sm font-medium">RO</span>
+            </label>
+            <input
+              ref={idRef}
+              type="text"
+              inputMode="text"
+              data-keyboard="numeric"
+              value={searchCardId}
+              onChange={(event) => setSearchCardId(event.target.value.replace(/^RO/i, ""))}
+              onKeyDown={handleKeyDown}
+              className={inputClassName}
+              placeholder="Caută cui..."
+            />
+          </div>
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Tip client</span>
