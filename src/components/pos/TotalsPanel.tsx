@@ -177,21 +177,8 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
         </div>
       </div>
       <div className="flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-wide text-gray-500">Cod fiscal</span>
-        <input
-          ref={codFiscalInputRef}
-          className={clsx(inputClass, "bg-white")}
-          value={codFiscal}
-          placeholder=""
-          data-keyboard="text"
-          onChange={(event) => setCodFiscal(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              event.currentTarget.blur();
-            }
-          }}
-        />
+    
+        
       </div>
       <label className="flex flex-col gap-1">
        

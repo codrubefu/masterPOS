@@ -26,9 +26,6 @@ export function ActionsPanel({
 
   return (
     <aside className="rounded-2xl bg-white shadow-card p-4 flex flex-col gap-3">
-      <button type="button" className={secondaryClass} onClick={onAddPackaging}>
-        Bon ambalaje
-      </button>
       <button type="button" className={secondaryClass} onClick={onPriceCheck}>
         Verifica Pret
       </button>
