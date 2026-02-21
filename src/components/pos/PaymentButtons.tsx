@@ -35,6 +35,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [mixedPaymentError, setMixedPaymentError] = useState<string | null>(null);
   const [pollingIntervalId, setPollingIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [pollingTimeoutId, setPollingTimeoutId] = useState<NodeJS.Timeout | null>(null);
   
@@ -60,7 +61,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   useHotkeys(POS_SHORTCUTS.payMixed, (event) => {
     if (!enabled || isLoadingPayment || !isMixedPaymentActive) return;
     event.preventDefault();
-    handlePayment('mixed', onPayMixed);
+    handleMixedPayment();
   });
   useHotkeys(POS_SHORTCUTS.exit, (event) => {
     event.preventDefault();
@@ -189,6 +190,21 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     }
   };
 
+  const handleMixedPayment = () => {
+    const mixedTotal = cardAmount + numerarAmount;
+    const roundedMixedTotal = Number(mixedTotal.toFixed(2));
+    const roundedTotal = Number(total.toFixed(2));
+
+    if (roundedMixedTotal !== roundedTotal) {
+      setMixedPaymentError(
+        `Suma introdusa nu corespunde totalului. Card + Numerar = ${roundedMixedTotal.toFixed(2)}, Total = ${roundedTotal.toFixed(2)}.`
+      );
+      return;
+    }
+
+    handlePayment('mixed', onPayMixed);
+  };
+
   const startPolling = (baseUrl: string, originalHandler: () => void) => {
     // Clean up any existing timers first
     stopPolling();
@@ -307,7 +323,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         <button 
           type="button" 
           className={`${buttonClass} bg-amber-500 hover:bg-amber-400`} 
-          onClick={() => handlePayment('mixed', onPayMixed)} 
+          onClick={handleMixedPayment}
           disabled={!enabled || isLoadingPayment || !isMixedPaymentActive}
         >
           {isLoadingPayment ? 'Se procesează...' : 'Plata mixtă'}
@@ -396,6 +412,22 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {mixedPaymentError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-slate-900">Eroare plata mixta</h2>
+            <p className="mt-3 text-sm text-slate-700">{mixedPaymentError}</p>
+            <button
+              type="button"
+              onClick={() => setMixedPaymentError(null)}
+              className="mt-6 w-full rounded-lg bg-red-600 px-4 py-2 text-white font-medium hover:bg-red-500 transition-colors"
+            >
+              Inchide
+            </button>
           </div>
         </div>
       )}
