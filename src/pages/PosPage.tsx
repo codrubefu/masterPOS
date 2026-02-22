@@ -42,6 +42,7 @@ export function PosPage() {
     casa,
     setCashGiven,
     setCustomer,
+    updateCustomerLocal,
     addProductByUpc,
     addCustomItem,
     selectItem,
@@ -64,6 +65,7 @@ export function PosPage() {
     casa: state.casa,
     setCashGiven: state.setCashGiven,
     setCustomer: state.setCustomer,
+    updateCustomerLocal: state.updateCustomerLocal,
     addProductByUpc: state.addProductByUpc,
     addCustomItem: state.addCustomItem,
     selectItem: state.selectItem,
@@ -234,6 +236,17 @@ export function PosPage() {
       setCartError(true);
       return;
     }
+    const incomingId = updatedCustomer.id?.toString().trim() ?? "";
+    const currentId = customer?.id?.toString().trim() ?? "";
+    const shouldSearchById = incomingId.length > 0 && incomingId !== currentId;
+
+    if (!shouldSearchById) {
+      updateCustomerLocal(updatedCustomer);
+      setCartInfo("Client actualizat cu succes");
+      setCartError(false);
+      return;
+    }
+
     setCartInfo("Actualizare client...");
     setCartError(false);
     const result = await setCustomer(updatedCustomer);

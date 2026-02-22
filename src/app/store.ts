@@ -51,6 +51,7 @@ interface CartStore extends CartState {
   setCardAmount: (value: number) => void;
   setNumerarAmount: (value: number) => void;
   setCustomer: (customer: Customer) => Promise<{ success: boolean; error?: string }>;
+  updateCustomerLocal: (customer: Customer) => void;
   setPaymentMethod: (method?: PaymentMethod) => void;
   setCasa: (casa: number) => void;
   setPendingPayment: (payment: { bon_no: number; processed_at: string; type?: PaymentMethod } | undefined) => void;
@@ -673,6 +674,12 @@ export const useCartStore = create<CartStore>()(
         }));
         return { success: true };
       },
+      updateCustomerLocal: (customer) =>
+        set((state) => ({
+          ...state,
+          customer,
+          lastAction: `Client ${customer.lastName ?? customer.id}`
+        })),
       setCasa: (casa) =>
         set((state) => ({
           ...state,
