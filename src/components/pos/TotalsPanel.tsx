@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { useRef, useEffect, useState, useCallback } from "react";
-import { formatMoney, parseNumericInput } from "../../lib/money";
+import { formatMoney, parseNumericInput, roundMoney } from "../../lib/money";
 import { useCartStore } from "../../app/store";
 
 interface TotalsPanelProps {
@@ -45,15 +45,25 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
 
   const handleCardAmountChange = useCallback((rawValue: string) => {
     const sanitized = sanitizeDecimalInput(rawValue);
+    const nextCardAmount = roundMoney(Math.max(parseNumericInput(sanitized), 0));
+    const nextNumerarAmount = roundMoney(Math.max(total - nextCardAmount, 0));
+
     setCardAmountText(sanitized);
-    setCardAmount(parseNumericInput(sanitized));
-  }, [sanitizeDecimalInput, setCardAmount]);
+    setCardAmount(nextCardAmount);
+    setNumerarAmountText(String(nextNumerarAmount));
+    setNumerarAmount(nextNumerarAmount);
+  }, [sanitizeDecimalInput, setCardAmount, setNumerarAmount, total]);
 
   const handleNumerarAmountChange = useCallback((rawValue: string) => {
     const sanitized = sanitizeDecimalInput(rawValue);
+    const nextNumerarAmount = roundMoney(Math.max(parseNumericInput(sanitized), 0));
+    const nextCardAmount = roundMoney(Math.max(total - nextNumerarAmount, 0));
+
     setNumerarAmountText(sanitized);
-    setNumerarAmount(parseNumericInput(sanitized));
-  }, [sanitizeDecimalInput, setNumerarAmount]);
+    setNumerarAmount(nextNumerarAmount);
+    setCardAmountText(String(nextCardAmount));
+    setCardAmount(nextCardAmount);
+  }, [sanitizeDecimalInput, setCardAmount, setNumerarAmount, total]);
 
   // Sync cashGiven state with native input events (for onscreen keyboard)
   useEffect(() => {
