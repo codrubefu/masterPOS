@@ -149,6 +149,7 @@ export function PosLineForm({
         <label className="flex flex-col gap-1 col-span-2">
           <span className="text-xs uppercase tracking-wide text-gray-500">UPC</span>
           <input
+              autoComplete="off"
             ref={upcRef}
             value={form.upc}
             onChange={(event) => setForm((prev) => ({ ...prev, upc: event.target.value }))}
@@ -160,6 +161,7 @@ export function PosLineForm({
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Cantitate</span>
           <input
+              autoComplete="off"
             ref={qtyRef}
             value={form.qty}
             onChange={(event) => setForm((prev) => ({ ...prev, qty: event.target.value }))}
@@ -171,6 +173,7 @@ export function PosLineForm({
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Preț</span>
           <input
+              autoComplete="off"
             ref={priceRef}
             value={form.price}
             onChange={(event) => setForm((prev) => ({ ...prev, price: event.target.value }))}
@@ -182,6 +185,7 @@ export function PosLineForm({
         <label className="flex flex-col gap-1 col-span-2">
           <span className="text-xs uppercase tracking-wide text-gray-500">Denumire</span>
           <input
+              autoComplete="off"
             value={form.name}
             onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             className={inputClass}
@@ -192,6 +196,7 @@ export function PosLineForm({
         <label className="flex flex-col gap-1 col-span-3">
           <span className="text-xs uppercase tracking-wide text-gray-500">Căutare produs</span>
           <input
+              autoComplete="off"
             ref={searchRef}
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
@@ -222,6 +227,7 @@ export function PosLineForm({
           </span>
           <div className="flex gap-2">
             <input
+              autoComplete="off"
               value={useValueDiscount ? form.valueDiscount : form.percentDiscount}
               onChange={(event) =>
                 setForm((prev) =>

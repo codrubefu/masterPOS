@@ -106,7 +106,8 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
           <h2 className="text-xl font-semibold text-slate-900">Produse scanate</h2>
         </div>
         <div className="flex items-center gap-2 ml-auto">
-          <input 
+          <input
+              autoComplete="off" 
             type ="text"
             ref = {searchTermRef}
             placeholder= "Caută produs..."
@@ -137,7 +138,8 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                 <rect x="6" y="11" width="8" height="2" rx="0.5" fill="currentColor"/>
               </svg>
             </span>
-            <input 
+            <input
+              autoComplete="off" 
               type="checkbox"
               id="toggleKeyboard"
               checked={iskeyboardEnabled}
@@ -286,6 +288,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                 Cantitate:
               </label>
               <input
+              autoComplete="off"
                 ref={quantityInputRef}
                 type="number"
                 min="1"

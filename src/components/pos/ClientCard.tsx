@@ -127,6 +127,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
           <div className="flex gap-2 items-center">
             <label className="inline-flex items-center gap-2 text-sm select-none">
               <input
+              autoComplete="off"
                 type="checkbox"
                 className="h-5 w-5 rounded border-gray-200"
                 checked={useRoPrefix}
@@ -136,6 +137,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
               <span className="text-sm font-medium">RO</span>
             </label>
             <input
+              autoComplete="off"
               ref={idRef}
               type="text"
               inputMode="text"
@@ -151,6 +153,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Tip client</span>
           <input
+              autoComplete="off"
             disabled
             readOnly
             type="text"
@@ -161,6 +164,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Nume</span>
           <input
+              autoComplete="off"
             ref={lastNameRef}
             value={customer.lastName ?? ""}
             readOnly
@@ -173,6 +177,7 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
         <label className="flex flex-col gap-1"> 
           <span className="text-xs uppercase tracking-wide text-gray-500">Nr. Auto</span>
           <input
+              autoComplete="off"
             ref={nrAutoRef}
             value={customer.nrAuto ?? ""}
             onChange={handleChange("nrAuto")}

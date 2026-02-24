@@ -172,6 +172,7 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
       <label className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Bani</span>
         <input
+              autoComplete="off"
           ref={cashGivenInputRef}
           className={clsx(inputClass, "font-semibold text-lg")}
           value={cashGiven}
@@ -196,6 +197,7 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
       <label className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Card</span>
         <input
+              autoComplete="off"
           ref={cardAmountInputRef}
           className={clsx(inputClass, "bg-white", hasError && "border-red-300")}
           value={cardAmountText}
@@ -207,6 +209,7 @@ export function TotalsPanel({ subtotal, total, change, cashGiven, onCashChange }
       <label className="flex flex-col gap-1">
         <span className="text-xs uppercase tracking-wide text-gray-500">Numerar</span>
         <input
+              autoComplete="off"
           ref={numerarAmountInputRef}
           className={clsx(inputClass, "bg-white", hasError && "border-red-300")}
           value={numerarAmountText}

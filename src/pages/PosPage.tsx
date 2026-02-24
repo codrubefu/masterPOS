@@ -499,6 +499,7 @@ export function PosPage() {
             </header>
             <div className="flex gap-2">
               <input
+              autoComplete="off"
                 ref={priceCheckInputRef}
                 value={priceCheckCode}
                 onChange={(e) => setPriceCheckCode(e.target.value)}
@@ -528,6 +529,7 @@ export function PosPage() {
                   </svg>
                 </span>
                 <input
+              autoComplete="off"
                   type="checkbox"
                   id="togglePriceKeyboard"
                   checked={isPriceKeyboardEnabled}
