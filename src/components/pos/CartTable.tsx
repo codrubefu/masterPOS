@@ -27,6 +27,8 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
   const quantityInputRef = useRef<HTMLInputElement | null>(null);
   // Ref for the search input
   const searchTermRef = useRef<HTMLInputElement | null>(null);
+  const listContainerRef = useRef<HTMLDivElement | null>(null);
+  const previousItemsLengthRef = useRef(items.length);
   const [searchTerm, setSearchTerm] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CartItem | null>(null);
@@ -62,6 +64,17 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
       input.removeEventListener('input', handleNativeInput);
     };
   }, []);
+
+  useEffect(() => {
+    const listContainer = listContainerRef.current;
+    const previousLength = previousItemsLengthRef.current;
+
+    if (listContainer && items.length > previousLength) {
+      listContainer.scrollTop = listContainer.scrollHeight;
+    }
+
+    previousItemsLengthRef.current = items.length;
+  }, [items.length]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -149,7 +162,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
         </div>
       </header>
    
-      <div className="mt-4 flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <div ref={listContainerRef} className="mt-4 flex-1 overflow-y-auto min-h-0" style={{ maxHeight: 'calc(100vh - 200px)' }}>
         <table className="w-full mb-6" role="grid">
        
           <tbody className="divide-y divide-slate-100 text-sm">
