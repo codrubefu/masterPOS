@@ -31,6 +31,7 @@ export function PosPage() {
   const [showCuiPopup, setShowCuiPopup] = useState(false);
   const [cuiSearchId, setCuiSearchId] = useState("");
   const [cuiUseRoPrefix, setCuiUseRoPrefix] = useState(false);
+  const [cuiNrAuto, setCuiNrAuto] = useState("");
   const [pendingSubtotalAction, setPendingSubtotalAction] = useState<null | (() => void)>(null);
   
   const {
@@ -112,6 +113,7 @@ export function PosPage() {
     if (!customer?.id) {
       setCuiSearchId("");
       setCuiUseRoPrefix(false);
+      setCuiNrAuto("");
       return;
     }
 
@@ -119,7 +121,8 @@ export function PosPage() {
     const hasRoPrefix = /^RO/i.test(currentId);
     setCuiUseRoPrefix(hasRoPrefix);
     setCuiSearchId(currentId.replace(/^RO/i, ""));
-  }, [customer?.id]);
+    setCuiNrAuto(customer?.nrAuto ?? "");
+  }, [customer?.id, customer?.nrAuto]);
 
   const handleStorno = () => {
     if (!selectedItemId) return;
@@ -291,6 +294,7 @@ export function PosPage() {
     const hasRoPrefix = /^RO/i.test(currentId);
     setCuiUseRoPrefix(hasRoPrefix);
     setCuiSearchId(currentId.replace(/^RO/i, ""));
+    setCuiNrAuto(customer?.nrAuto ?? "");
     setShowCuiPopup(true);
   };
 
@@ -321,7 +325,8 @@ export function PosPage() {
     const finalId = cuiUseRoPrefix ? `RO${trimmedId}` : trimmedId;
     await handleClientUpdate({
       ...(customer ?? { id: "", type: "pf" }),
-      id: finalId
+      id: finalId,
+      nrAuto: cuiNrAuto
     });
 
     setShowCuiPopup(false);
@@ -749,6 +754,27 @@ export function PosPage() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <h2 className="text-lg font-semibold text-slate-900">Date CUI</h2>
             <div className="mt-4 flex flex-col gap-4">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide text-gray-500">Nume</span>
+                <input
+                  type="text"
+                  value={customer?.lastName ?? ""}
+                  readOnly
+                  disabled
+                  className="h-12 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm shadow-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide text-gray-500">Nr. Auto</span>
+                <input
+                  type="text"
+                  value={cuiNrAuto}
+                  onChange={(event) => setCuiNrAuto(event.target.value)}
+                  className="h-12 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/50"
+                  placeholder="Nr. auto"
+                  data-keyboard="text"
+                />
+              </label>
               <label className="flex items-center gap-2 text-sm select-none">
                 <input
                   type="checkbox"
