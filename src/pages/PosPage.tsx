@@ -821,6 +821,15 @@ export function PosPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <h2 className="text-lg font-semibold text-slate-900">Date CUI</h2>
+            {/* Mesaj de eroare/feedback */}
+            {cartInfo && (
+              <div
+                className={`mt-2 rounded-xl px-3 py-2 text-sm font-medium ${cartError ? "bg-red-100 text-red-700 border border-red-300" : "bg-green-100 text-green-700 border border-green-300"}`}
+                role="alert"
+              >
+                {cartInfo}
+              </div>
+            )}
             <div className="mt-4 flex flex-col gap-4">
               <label className="flex flex-col gap-1">
                 <span className="text-xs uppercase tracking-wide text-gray-500">CUI</span>
