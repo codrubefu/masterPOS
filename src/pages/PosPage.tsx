@@ -506,7 +506,7 @@ export function PosPage() {
           </div>
         </header>
         <div className="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
-          <div className="col-span-12 col-span-5 flex gap-6">
+          <div className="col-span-12 col-span-8 flex gap-6">
             <CartTable
               items={items}
               selectedId={selectedItemId}
@@ -536,22 +536,7 @@ export function PosPage() {
               enabled={paymentButtonsEnabled}
               setEnabled={setPaymentButtonsEnabled}
             />
-          </div>
-
-
-          <div className="col-span-12 col-span-3 flex gap-6">
-            <div className="w-full max-w-xs">
-              <ClientCard value={customer} onChange={handleClientUpdate} />
-              {customer?.id && (
-                <button
-                  type="button"
-                  onClick={openCuiPopupForEdit}
-                  className="mb-3 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-                >
-                  Modifică CUI
-                </button>
-              )}
-              <ActionsPanel
+             <ActionsPanel
                 onMoveUp={() => selectedItemId && moveItemUp(selectedItemId)}
                 onMoveDown={() => selectedItemId && moveItemDown(selectedItemId)}
                 onPriceCheck={openPriceCheck}
@@ -563,15 +548,34 @@ export function PosPage() {
                 }} onToggleKeyboard={function (): void {
                   throw new Error("Function not implemented.");
                 }} />
-            </div>
+              {customer?.id && (
+                <div className="flex gap-2 w-full">
+                  <button
+                    type="button"
+                    onClick={openCuiPopupForEdit}
+                    className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                  >
+                    Modifică CUI: {customer.id}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const defaultCustomer = { id: "", type: "pf" as const };
+                      await setCustomer(defaultCustomer);
+                      setCartInfo("CUI șters, client setat pe default");
+                      setCartError(false);
+                    }}
+                    className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
+                  >
+                    Șterge CUI
+                  </button>
+                </div>
+              )}
+             
           </div>
         </div>
         <footer className="text-center text-sm text-gray-500 flex-shrink-0">
-          <div className="text-sm text-gray-500 text-right">
-            <p>{new Date().toLocaleString("ro-RO")}</p>
-            {lastAction && <p className="text-indigo-600">{lastAction}</p>}
-            {toast && <p className="text-emerald-600">{toast}</p>}
-          </div>
+    
         </footer>
       </div>
 

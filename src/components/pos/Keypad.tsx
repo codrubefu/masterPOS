@@ -250,11 +250,11 @@ export function Keypad({ open, onClose }: KeypadProps) {
   };
 
   return (
-  <div className="fixed inset-x-0 bottom-0 z-50 flex items-end justify-end pointer-events-none" style={{ marginRight: 20 }}>
+  <div className="fixed inset-x-0 bottom-0 z-[9999] flex items-end justify-end pointer-events-none" style={{ marginRight: 20 }}>
       <div className={clsx(
         "pointer-events-auto rounded-3xl bg-white p-6 shadow-2xl mb-4",
         mode === "text" ? "w-full max-w-6xl" : "w-full max-w-md"
-      )} data-keypad="true">
+      )} data-keypad="true" style={{ position: 'relative', zIndex: 9999 }}>
         <header className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">Tastatură pe ecran</p>

@@ -13,20 +13,17 @@ export function ClientCard({ value }: ClientCardProps) {
     lastName: "Persoană fizică"
   };
 
+  console.log("ClientCard render", customer);
+
   return (
     <section className="rounded-2xl bg-white shadow-card p-5 flex flex-col gap-4 mb-6">
-      <div className="grid grid-cols-1 gap-4 text-sm">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-gray-500">Tip client</span>
-          <input
-            disabled
-            readOnly
-            type="text"
-            value={customer.type === "pf" ? "Persoană fizică" : "Persoană juridică"}
-            className={clsx(inputClassName, "bg-gray-50")}
-          />
-        </label>
-      </div>
+      {customer.type === "pj" && (
+        <div className="grid grid-cols-1 gap-4 text-sm">
+          <label className="flex flex-col gap-1">Client: {customer.lastName}</label>
+          <label className="flex flex-col gap-1">CUI: {customer.id}</label>
+          <label className="flex flex-col gap-1">Numar auto: {customer.nrAuto}</label>
+        </div>
+      )}
     </section>
   );
 }
