@@ -10,11 +10,12 @@ interface PaymentButtonsProps {
   onPayMixed: () => void;
   onPayModern: () => void;
   onExit: () => void;
+  onSubtotalClick?: (continueFlow: () => void) => void | Promise<void>;
   enabled?: boolean;
   setEnabled?: (enabled: boolean) => void;
 }
 
-export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, onExit, enabled = false, setEnabled }: PaymentButtonsProps) {
+export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, onExit, onSubtotalClick, enabled = false, setEnabled }: PaymentButtonsProps) {
   const { total, items, casa, customer, cashGiven, subtotal, totalDiscount, change, resetCart, cardAmount, numerarAmount, setPendingPayment, pendingPayment } = useCartStore((state) => ({
     total: state.total,
     items: state.items,
@@ -77,9 +78,9 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
 
   const buttonClass = "h-14 rounded-2xl text-white font-semibold text-base shadow-sm transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-400";
 
-  const handleSubTotal = async () => {
+  const executeSubtotalFlow = async () => {
     if (setEnabled) setEnabled(true);
-    
+
     setIsLoadingSubtotal(true);
     try {
       const config = await getConfig();
@@ -124,6 +125,17 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     } finally {
       setIsLoadingSubtotal(false);
     }
+  };
+
+  const handleSubTotal = async () => {
+    if (onSubtotalClick) {
+      await onSubtotalClick(() => {
+        void executeSubtotalFlow();
+      });
+      return;
+    }
+
+    await executeSubtotalFlow();
   };
 
   const handlePayment = async (type: 'cash' | 'card' | 'mixed' | 'modern', originalHandler: () => void) => {

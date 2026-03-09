@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useEffect, useState } from "react";
+import { ChangeEvent, useRef, useEffect } from "react";
 import clsx from "clsx";
 import { Customer } from "../../features/cart/types";
 
@@ -15,17 +15,7 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ value, onChange }: ClientCardProps) {
-    // Reset searchCardId when cart is reset (client value changes to default)
-    useEffect(() => {
-      if (!value || value.id === "" || value.id === "temp") {
-        setSearchCardId("");
-      }
-    }, [value]);
-  // Local state for card ID search
-  const [searchCardId, setSearchCardId] = useState("");
-  
   // Refs for all inputs
-  const idRef = useRef<HTMLInputElement | null>(null);
   const lastNameRef = useRef<HTMLInputElement | null>(null);
   const firstNameRef = useRef<HTMLInputElement | null>(null);
   const discountPercentRef = useRef<HTMLInputElement | null>(null);
@@ -41,9 +31,6 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     nrAuto: ""
   };
 
-  // Whether to prepend the "RO" prefix when sending the ID
-  const [useRoPrefix, setUseRoPrefix] = useState(false);
-
   const handleChange = (field: keyof Customer) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (!onChange) return;
     
@@ -53,22 +40,6 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     }
     
     onChange({ ...customer, [field]: fieldValue });
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      // Build the final id depending on the RO toggle
-      const finalId = (useRoPrefix ? `RO${searchCardId.trim()}` : searchCardId.trim());
-
-      // Trigger the search by calling onChange with the search ID
-      if (onChange && finalId) {
-        onChange({ ...customer, id: finalId });
-      }
-
-      // Close the onscreen keyboard by blurring the input
-      event.currentTarget.blur();
-    }
   };
 
   // --- Sync state with native input events (for onscreen keyboard) ---
@@ -101,53 +72,10 @@ export function ClientCard({ value, onChange }: ClientCardProps) {
     };
   }, [customer, onChange]);
 
-  // Sync searchCardId with native input events (for onscreen keyboard)
-  useEffect(() => {
-    const input = idRef.current;
-    if (!input) return;
-    const handleNativeInput = (e: Event) => {
-      if (e.target instanceof HTMLInputElement) {
-        // Strip any accidental RO typed into the numeric input and keep only the numeric part
-        const val = e.target.value.replace(/^RO/i, "");
-        setSearchCardId(val);
-      }
-    };
-    input.addEventListener('input', handleNativeInput);
-    return () => {
-      input.removeEventListener('input', handleNativeInput);
-    };
-  }, []);
-
   return (
     <section className="rounded-2xl bg-white shadow-card p-5 flex flex-col gap-4 mb-6">
 
       <div className="grid grid-cols-1 gap-4 text-sm">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-wide text-gray-500">CUI</span>
-          <div className="flex gap-2 items-center">
-            <label className="inline-flex items-center gap-2 text-sm select-none">
-              <input
-                type="checkbox"
-                className="h-5 w-5 rounded border-gray-200"
-                checked={useRoPrefix}
-                onChange={(e) => setUseRoPrefix(e.target.checked)}
-                aria-label="Prefixează cu RO"
-              />
-              <span className="text-sm font-medium">RO</span>
-            </label>
-            <input
-              ref={idRef}
-              type="text"
-              inputMode="text"
-              data-keyboard="numeric"
-              value={searchCardId}
-              onChange={(event) => setSearchCardId(event.target.value.replace(/^RO/i, ""))}
-              onKeyDown={handleKeyDown}
-              className={inputClassName}
-              placeholder="Caută cui..."
-            />
-          </div>
-        </label>
         <label className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide text-gray-500">Tip client</span>
           <input
