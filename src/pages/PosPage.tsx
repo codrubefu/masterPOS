@@ -15,6 +15,10 @@ import { CartItem, PaymentMethod, Product, Customer } from "../features/cart/typ
 import { useGlobalRequestKeyboard } from "../lib/useGlobalRequestKeyboard";
 
 export function PosPage() {
+    // Refs pentru cuiPopup
+    const cuiInputRef = useRef<HTMLInputElement | null>(null);
+    const cuiRoCheckboxRef = useRef<HTMLInputElement | null>(null);
+    const cuiNrAutoRef = useRef<HTMLInputElement | null>(null);
   // Ref for price check input
   const priceCheckInputRef = useRef<HTMLInputElement | null>(null);
   
@@ -783,6 +787,7 @@ export function PosPage() {
                 <div className="flex gap-2">
                   <label className="inline-flex items-center gap-2 text-sm select-none rounded-xl border border-gray-200 px-3">
                     <input
+                      ref={cuiRoCheckboxRef}
                       type="checkbox"
                       className="h-5 w-5 rounded border-gray-200"
                       checked={cuiUseRoPrefix}
@@ -792,6 +797,7 @@ export function PosPage() {
                     <span className="font-medium">RO</span>
                   </label>
                   <input
+                    ref={cuiInputRef}
                     type="text"
                     value={cuiSearchId}
                     onChange={(event) => setCuiSearchId(event.target.value.replace(/^RO/i, ""))}
@@ -821,6 +827,7 @@ export function PosPage() {
               <label className="flex flex-col gap-1">
                 <span className="text-xs uppercase tracking-wide text-gray-500">Nr. Auto</span>
                 <input
+                  ref={cuiNrAutoRef}
                   type="text"
                   value={cuiNrAuto}
                   onChange={(event) => setCuiNrAuto(event.target.value)}
