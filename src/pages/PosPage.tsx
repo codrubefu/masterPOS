@@ -320,7 +320,7 @@ export function PosPage() {
       // Show custom popup with error message
       setClientErrorMessage(result.error || "Clientul nu există");
       setShowClientErrorPopup(true);
-      
+      setCartInfo(result.error || "Eroare la actualizarea clientului");
       // Reset to default customer
       const defaultCustomer: Customer = {
         id: "",
@@ -328,7 +328,6 @@ export function PosPage() {
       };
       await setCustomer(defaultCustomer);
       
-      setCartInfo("Client setat pe default");
       setCartError(false);
     }
   };
