@@ -113,6 +113,46 @@ export function PosPage() {
     };
   }, [priceCheckOpen]); // Re-run when modal opens/closes
 
+  // Sync CUI fields with native input events (for onscreen keyboard)
+  useEffect(() => {
+    const input = cuiInputRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setCuiSearchId(e.target.value.replace(/^RO/i, ""));
+      }
+    };
+    input.addEventListener("input", handleNativeInput);
+    return () => {
+      input.removeEventListener("input", handleNativeInput);
+    };
+  }, [showCuiPopup]);
+
+  useEffect(() => {
+    const input = cuiNrAutoRef.current;
+    if (!input) return;
+    const handleNativeInput = (e: Event) => {
+      if (e.target instanceof HTMLInputElement) {
+        setCuiNrAuto(e.target.value);
+      }
+    };
+    input.addEventListener("input", handleNativeInput);
+    return () => {
+      input.removeEventListener("input", handleNativeInput);
+    };
+  }, [showCuiPopup]);
+
+  useEffect(() => {
+    if (!showCuiPopup) return;
+    const timer = window.setTimeout(() => {
+      cuiInputRef.current?.focus();
+      cuiInputRef.current?.select();
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [showCuiPopup]);
+
   useEffect(() => {
     if (!customer?.id) {
       setCuiSearchId("");
@@ -801,6 +841,15 @@ export function PosPage() {
                     type="text"
                     value={cuiSearchId}
                     onChange={(event) => setCuiSearchId(event.target.value.replace(/^RO/i, ""))}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleSearchCui();
+                      } else if (event.key === "Escape") {
+                        event.preventDefault();
+                        handleCancelCui();
+                      }
+                    }}
                     className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/50"
                     placeholder="Introduceți CUI"
                     data-keyboard="numeric"
@@ -831,6 +880,15 @@ export function PosPage() {
                   type="text"
                   value={cuiNrAuto}
                   onChange={(event) => setCuiNrAuto(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void handleConfirmCui();
+                    } else if (event.key === "Escape") {
+                      event.preventDefault();
+                      handleCancelCui();
+                    }
+                  }}
                   className="h-12 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/50"
                   placeholder="Nr. auto"
                   data-keyboard="text"
