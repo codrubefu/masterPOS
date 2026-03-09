@@ -314,7 +314,22 @@ export function PosPage() {
     setPendingSubtotalAction(null);
   };
 
-  const handleSaveCui = async () => {
+  const handleSearchCui = async () => {
+    const trimmedId = cuiSearchId.trim();
+    if (!trimmedId) {
+      setCartInfo("Introduceți CUI");
+      setCartError(true);
+      return;
+    }
+
+    const finalId = cuiUseRoPrefix ? `RO${trimmedId}` : trimmedId;
+    await handleClientUpdate({
+      ...(customer ?? { id: "", type: "pf" }),
+      id: finalId
+    });
+  };
+
+  const handleConfirmCui = async () => {
     const trimmedId = cuiSearchId.trim();
     if (!trimmedId) {
       setCartInfo("Introduceți CUI");
@@ -331,6 +346,11 @@ export function PosPage() {
 
     setShowCuiPopup(false);
     pendingSubtotalAction?.();
+    setPendingSubtotalAction(null);
+  };
+
+  const handleCancelCui = () => {
+    setShowCuiPopup(false);
     setPendingSubtotalAction(null);
   };
 
@@ -755,6 +775,36 @@ export function PosPage() {
             <h2 className="text-lg font-semibold text-slate-900">Date CUI</h2>
             <div className="mt-4 flex flex-col gap-4">
               <label className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide text-gray-500">CUI</span>
+                <div className="flex gap-2">
+                  <label className="inline-flex items-center gap-2 text-sm select-none rounded-xl border border-gray-200 px-3">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 rounded border-gray-200"
+                      checked={cuiUseRoPrefix}
+                      onChange={(e) => setCuiUseRoPrefix(e.target.checked)}
+                      aria-label="Prefixează cu RO"
+                    />
+                    <span className="font-medium">RO</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cuiSearchId}
+                    onChange={(event) => setCuiSearchId(event.target.value.replace(/^RO/i, ""))}
+                    className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/50"
+                    placeholder="Introduceți CUI"
+                    data-keyboard="numeric"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSearchCui}
+                    className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-400"
+                  >
+                    Caută
+                  </button>
+                </div>
+              </label>
+              <label className="flex flex-col gap-1">
                 <span className="text-xs uppercase tracking-wide text-gray-500">Nume</span>
                 <input
                   type="text"
@@ -775,39 +825,21 @@ export function PosPage() {
                   data-keyboard="text"
                 />
               </label>
-              <label className="flex items-center gap-2 text-sm select-none">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5 rounded border-gray-200"
-                  checked={cuiUseRoPrefix}
-                  onChange={(e) => setCuiUseRoPrefix(e.target.checked)}
-                  aria-label="Prefixează cu RO"
-                />
-                <span className="font-medium">RO</span>
-              </label>
-              <input
-                type="text"
-                value={cuiSearchId}
-                onChange={(event) => setCuiSearchId(event.target.value.replace(/^RO/i, ""))}
-                className="h-12 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/50"
-                placeholder="Introduceți CUI"
-                data-keyboard="numeric"
-              />
             </div>
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
-                onClick={() => setShowCuiPopup(false)}
+                onClick={handleCancelCui}
                 className="flex-1 rounded-xl bg-gray-200 px-4 py-3 font-medium text-gray-800 hover:bg-gray-300"
               >
                 Renunță
               </button>
               <button
                 type="button"
-                onClick={handleSaveCui}
+                onClick={handleConfirmCui}
                 className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 font-medium text-white hover:bg-indigo-500"
               >
-                Salvează
+                Confirmă
               </button>
             </div>
           </div>
