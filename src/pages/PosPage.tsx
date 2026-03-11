@@ -13,8 +13,6 @@ import { SettingsModal } from "../components/pos/SettingsModal";
 import { formatMoney } from "../lib/money";
 import { CartItem, PaymentMethod, Product, Customer } from "../features/cart/types";
 import { useGlobalRequestKeyboard } from "../lib/useGlobalRequestKeyboard";
-import { random } from "nanoid";
-import { a } from "vitest/dist/suite-dWqIFb_-.js";
 
 export function PosPage() {
   // Ref for price check input
@@ -29,6 +27,12 @@ export function PosPage() {
   // Client error popup state
   const [showClientErrorPopup, setShowClientErrorPopup] = useState(false);
   const [clientErrorMessage, setClientErrorMessage] = useState("");
+  const [showLegalEntityPrompt, setShowLegalEntityPrompt] = useState(false);
+  const [showCuiPopup, setShowCuiPopup] = useState(false);
+  const [cuiSearchId, setCuiSearchId] = useState("");
+  const [cuiUseRoPrefix, setCuiUseRoPrefix] = useState(false);
+  const [cuiNrAuto, setCuiNrAuto] = useState("");
+  const [pendingSubtotalAction, setPendingSubtotalAction] = useState<null | (() => void)>(null);
   
   const {
     items,
@@ -104,6 +108,21 @@ export function PosPage() {
       input.removeEventListener('input', handleNativeInput);
     };
   }, [priceCheckOpen]); // Re-run when modal opens/closes
+
+  useEffect(() => {
+    if (!customer?.id) {
+      setCuiSearchId("");
+      setCuiUseRoPrefix(false);
+      setCuiNrAuto("");
+      return;
+    }
+
+    const currentId = customer.id.toString();
+    const hasRoPrefix = /^RO/i.test(currentId);
+    setCuiUseRoPrefix(hasRoPrefix);
+    setCuiSearchId(currentId.replace(/^RO/i, ""));
+    setCuiNrAuto(customer?.nrAuto ?? "");
+  }, [customer?.id, customer?.nrAuto]);
 
   const handleStorno = () => {
     if (!selectedItemId) return;
@@ -268,6 +287,71 @@ export function PosPage() {
       setCartInfo("Client setat pe default");
       setCartError(false);
     }
+  };
+
+  const openCuiPopupForEdit = () => {
+    const currentId = customer?.id?.toString() ?? "";
+    const hasRoPrefix = /^RO/i.test(currentId);
+    setCuiUseRoPrefix(hasRoPrefix);
+    setCuiSearchId(currentId.replace(/^RO/i, ""));
+    setCuiNrAuto(customer?.nrAuto ?? "");
+    setShowCuiPopup(true);
+  };
+
+  const handleSubtotalClick = async (continueFlow: () => void) => {
+    setPendingSubtotalAction(() => continueFlow);
+    setShowLegalEntityPrompt(true);
+  };
+
+  const handleConfirmLegalEntity = (isLegalEntity: boolean) => {
+    setShowLegalEntityPrompt(false);
+    if (isLegalEntity) {
+      openCuiPopupForEdit();
+      return;
+    }
+
+    pendingSubtotalAction?.();
+    setPendingSubtotalAction(null);
+  };
+
+  const handleSearchCui = async () => {
+    const trimmedId = cuiSearchId.trim();
+    if (!trimmedId) {
+      setCartInfo("Introduceți CUI");
+      setCartError(true);
+      return;
+    }
+
+    const finalId = cuiUseRoPrefix ? `RO${trimmedId}` : trimmedId;
+    await handleClientUpdate({
+      ...(customer ?? { id: "", type: "pf" }),
+      id: finalId
+    });
+  };
+
+  const handleConfirmCui = async () => {
+    const trimmedId = cuiSearchId.trim();
+    if (!trimmedId) {
+      setCartInfo("Introduceți CUI");
+      setCartError(true);
+      return;
+    }
+
+    const finalId = cuiUseRoPrefix ? `RO${trimmedId}` : trimmedId;
+    await handleClientUpdate({
+      ...(customer ?? { id: "", type: "pf" }),
+      id: finalId,
+      nrAuto: cuiNrAuto
+    });
+
+    setShowCuiPopup(false);
+    pendingSubtotalAction?.();
+    setPendingSubtotalAction(null);
+  };
+
+  const handleCancelCui = () => {
+    setShowCuiPopup(false);
+    setPendingSubtotalAction(null);
   };
 
   useEffect(() => {
@@ -448,6 +532,7 @@ export function PosPage() {
               onPayMixed={() => handlePayment("mixed")}
               onPayModern={() => handlePayment("modern")}
               onExit={handleExit}
+              onSubtotalClick={handleSubtotalClick}
               enabled={paymentButtonsEnabled}
               setEnabled={setPaymentButtonsEnabled}
             />
@@ -457,6 +542,15 @@ export function PosPage() {
           <div className="col-span-12 col-span-3 flex gap-6">
             <div className="w-full max-w-xs">
               <ClientCard value={customer} onChange={handleClientUpdate} />
+              {customer?.id && (
+                <button
+                  type="button"
+                  onClick={openCuiPopupForEdit}
+                  className="mb-3 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                >
+                  Modifică CUI
+                </button>
+              )}
               <ActionsPanel
                 onMoveUp={() => selectedItemId && moveItemUp(selectedItemId)}
                 onMoveDown={() => selectedItemId && moveItemDown(selectedItemId)}
@@ -645,6 +739,107 @@ export function PosPage() {
                 className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-colors shadow-sm"
               >
                 OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLegalEntityPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-slate-900">Persoană juridică?</h2>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleConfirmLegalEntity(false)}
+                className="rounded-xl bg-gray-200 px-4 py-3 font-medium text-gray-800 hover:bg-gray-300"
+              >
+                Nu
+              </button>
+              <button
+                type="button"
+                onClick={() => handleConfirmLegalEntity(true)}
+                className="rounded-xl bg-indigo-600 px-4 py-3 font-medium text-white hover:bg-indigo-500"
+              >
+                Da
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCuiPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-slate-900">Date CUI</h2>
+            <div className="mt-4 flex flex-col gap-4">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide text-gray-500">CUI</span>
+                <div className="flex gap-2">
+                  <label className="inline-flex items-center gap-2 text-sm select-none rounded-xl border border-gray-200 px-3">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 rounded border-gray-200"
+                      checked={cuiUseRoPrefix}
+                      onChange={(e) => setCuiUseRoPrefix(e.target.checked)}
+                      aria-label="Prefixează cu RO"
+                    />
+                    <span className="font-medium">RO</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cuiSearchId}
+                    onChange={(event) => setCuiSearchId(event.target.value.replace(/^RO/i, ""))}
+                    className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/50"
+                    placeholder="Introduceți CUI"
+                    data-keyboard="numeric"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSearchCui}
+                    className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-400"
+                  >
+                    Caută
+                  </button>
+                </div>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide text-gray-500">Nume</span>
+                <input
+                  type="text"
+                  value={customer?.lastName ?? ""}
+                  readOnly
+                  disabled
+                  className="h-12 rounded-xl border border-gray-200 bg-gray-50 px-3 text-sm shadow-sm"
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs uppercase tracking-wide text-gray-500">Nr. Auto</span>
+                <input
+                  type="text"
+                  value={cuiNrAuto}
+                  onChange={(event) => setCuiNrAuto(event.target.value)}
+                  className="h-12 rounded-xl border border-gray-200 px-3 text-sm shadow-sm focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/50"
+                  placeholder="Nr. auto"
+                  data-keyboard="text"
+                />
+              </label>
+            </div>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={handleCancelCui}
+                className="flex-1 rounded-xl bg-gray-200 px-4 py-3 font-medium text-gray-800 hover:bg-gray-300"
+              >
+                Renunță
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCui}
+                className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 font-medium text-white hover:bg-indigo-500"
+              >
+                Confirmă
               </button>
             </div>
           </div>
