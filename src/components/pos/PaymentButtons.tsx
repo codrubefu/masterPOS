@@ -48,6 +48,8 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   const isMixedPaymentActive = cardAmount > 1 && numerarAmount > 1;
   // Single payment methods are disabled when mixed payment is active
   const isSinglePaymentDisabled = isMixedPaymentActive;
+  // Disable all payment options if subtotal is 0
+  const isPaymentDisabled = subtotal <= 0;
 
   useHotkeys(POS_SHORTCUTS.payCash, (event) => {
     if (!enabled || isLoadingPayment || isSinglePaymentDisabled) return;
@@ -336,7 +338,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           type="button" 
           className={`${buttonClass} bg-amber-500 hover:bg-amber-400`} 
           onClick={handleMixedPayment}
-          disabled={!enabled || isLoadingPayment || !isMixedPaymentActive}
+          disabled={!enabled || isLoadingPayment || !isMixedPaymentActive || isPaymentDisabled}
         >
           {isLoadingPayment ? 'Se procesează...' : 'Plata mixtă'}
         </button>
@@ -344,7 +346,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           type="button" 
           className={`${buttonClass} bg-emerald-600 hover:bg-emerald-500`} 
           onClick={() => handlePayment('cash', onPayCash)} 
-          disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled}
+          disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled || isPaymentDisabled}
         >
           {isLoadingPayment ? 'Se procesează...' : 'Plata numerar'}
         </button>
@@ -352,7 +354,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           type="button" 
           className={`${buttonClass} bg-indigo-600 hover:bg-indigo-500`} 
           onClick={() => handlePayment('card', onPayCard)} 
-          disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled}
+          disabled={!enabled || isLoadingPayment || isSinglePaymentDisabled || isPaymentDisabled}
         >
           {isLoadingPayment ? 'Se procesează...' : 'Plata card'}
         </button>
