@@ -898,7 +898,13 @@ export function PosPage() {
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
-                onClick={handleCancelCui}
+                onClick={async () => {
+                  await setCustomer({ id: "", type: "pf" });
+                  setShowCuiPopup(false);
+                  setPendingSubtotalAction(null);
+                  setCartInfo("CUI șters, client setat pe default");
+                  setCartError(false);
+                }}
                 className="flex-1 rounded-xl bg-gray-200 px-4 py-3 font-medium text-gray-800 hover:bg-gray-300"
               >
                 Renunță
