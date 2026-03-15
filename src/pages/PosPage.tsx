@@ -113,6 +113,19 @@ export function PosPage() {
     };
   }, [priceCheckOpen]); // Re-run when modal opens/closes
 
+  // Focus UPC input when price check popup opens
+  useEffect(() => {
+    if (priceCheckOpen) {
+      const timer = window.setTimeout(() => {
+        priceCheckInputRef.current?.focus();
+        priceCheckInputRef.current?.select();
+      }, 0);
+      return () => {
+        window.clearTimeout(timer);
+      };
+    }
+  }, [priceCheckOpen]);
+
   // Sync CUI fields with native input events (for onscreen keyboard)
   useEffect(() => {
     const input = cuiInputRef.current;
@@ -528,6 +541,13 @@ export function PosPage() {
             </div>
             <div className={`flex items-center gap-4 text-sm ${cartError ? 'text-red-600' : 'text-green-600'}`}>{cartInfo}</div>
           </div>
+           <div className="flex items-center gap-4">
+                {customer?.id ? (
+                  <div className="text-green-600">
+                  <span>Clientul introdus: {customer?.cnpcui} - {customer?.lastName} </span>
+                  </div>
+                ) : null}
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowCancelConfirmation(true)}
@@ -615,11 +635,6 @@ export function PosPage() {
                   >
                     Șterge CUI
                   </button>
-                </div>
-                <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-                  <div><label className="font-semibold">CUI: </label>{customer.cnpcui}</div>
-                  <div><label className="font-semibold">Nume: </label>{customer.lastName}</div>
-                  <div><label className="font-semibold">Nr. Auto: </label>{customer.nrAuto}</div>
                 </div>
               </>
             )}
