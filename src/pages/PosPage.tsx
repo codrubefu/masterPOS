@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useState, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { nanoid } from "nanoid/non-secure";
 import { useCartStore } from "../app/store";
-import {fetchProductInfoByUpc} from "../app/checkPrice";
+import { fetchProductInfoByUpc } from "../app/checkPrice";
 import { ClientCard } from "../components/pos/ClientCard";
 import { CartTable } from "../components/pos/CartTable";
 import { ActionsPanel } from "../components/pos/ActionsPanel";
@@ -15,19 +15,19 @@ import { CartItem, PaymentMethod, Product, Customer } from "../features/cart/typ
 import { useGlobalRequestKeyboard } from "../lib/useGlobalRequestKeyboard";
 
 export function PosPage() {
-    // Refs pentru cuiPopup
-    const cuiInputRef = useRef<HTMLInputElement | null>(null);
-    const cuiRoCheckboxRef = useRef<HTMLInputElement | null>(null);
-    const cuiNrAutoRef = useRef<HTMLInputElement | null>(null);
+  // Refs pentru cuiPopup
+  const cuiInputRef = useRef<HTMLInputElement | null>(null);
+  const cuiRoCheckboxRef = useRef<HTMLInputElement | null>(null);
+  const cuiNrAutoRef = useRef<HTMLInputElement | null>(null);
   // Ref for price check input
   const priceCheckInputRef = useRef<HTMLInputElement | null>(null);
-  
+
   // Settings modal state
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  
+
   // Cancel receipt confirmation state
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
-  
+
   // Client error popup state
   const [showClientErrorPopup, setShowClientErrorPopup] = useState(false);
   const [clientErrorMessage, setClientErrorMessage] = useState("");
@@ -37,7 +37,7 @@ export function PosPage() {
   const [cuiUseRoPrefix, setCuiUseRoPrefix] = useState(false);
   const [cuiNrAuto, setCuiNrAuto] = useState("");
   const [pendingSubtotalAction, setPendingSubtotalAction] = useState<null | (() => void)>(null);
-  
+
   const {
     items,
     selectedItemId,
@@ -260,7 +260,7 @@ export function PosPage() {
       console.log('Searching for product with UPC:', searchTerm);
       console.log('Current cart items:', items);
       // Check if product already exists in cart (trim spaces for comparison)
-      const existingItem = items.find(item => 
+      const existingItem = items.find(item =>
         item.product.upc.trim() === searchTerm.trim() && !item.storno
       );
       console.log('Existing item in cart:', existingItem);
@@ -327,7 +327,7 @@ export function PosPage() {
         type: "pf"
       };
       await setCustomer(defaultCustomer);
-      
+
       setCartError(false);
     }
   };
@@ -338,7 +338,7 @@ export function PosPage() {
     setCuiUseRoPrefix(hasRoPrefix);
     setCuiSearchId(currentId.replace(/^RO/i, ""));
     setCuiNrAuto(customer?.nrAuto ?? "");
-          setCartInfo(false);
+    setCartInfo(false);
 
     setShowCuiPopup(true);
   };
@@ -581,19 +581,20 @@ export function PosPage() {
               enabled={paymentButtonsEnabled}
               setEnabled={setPaymentButtonsEnabled}
             />
-             <ActionsPanel
-                onMoveUp={() => selectedItemId && moveItemUp(selectedItemId)}
-                onMoveDown={() => selectedItemId && moveItemDown(selectedItemId)}
-                onPriceCheck={openPriceCheck}
-                onAddPackaging={handlePackaging}
-                onExit={handleExit}
-                onAddProduct={handleAddProduct}
-                hasSelection={Boolean(selectedItemId)} onDelete={function (): void {
-                  throw new Error("Function not implemented.");
-                }} onToggleKeyboard={function (): void {
-                  throw new Error("Function not implemented.");
-                }} />
-              {customer?.id && (
+            <ActionsPanel
+              onMoveUp={() => selectedItemId && moveItemUp(selectedItemId)}
+              onMoveDown={() => selectedItemId && moveItemDown(selectedItemId)}
+              onPriceCheck={openPriceCheck}
+              onAddPackaging={handlePackaging}
+              onExit={handleExit}
+              onAddProduct={handleAddProduct}
+              hasSelection={Boolean(selectedItemId)} onDelete={function (): void {
+                throw new Error("Function not implemented.");
+              }} onToggleKeyboard={function (): void {
+                throw new Error("Function not implemented.");
+              }} />
+            {customer?.id && (
+              <>
                 <div className="flex gap-2 w-full">
                   <button
                     type="button"
@@ -615,12 +616,18 @@ export function PosPage() {
                     Șterge CUI
                   </button>
                 </div>
-              )}
-             
+                <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+                  <div><label className="font-semibold">CUI: </label>{customer.cnpCui}</div>
+                  <div><label className="font-semibold">Nume: </label>{customer.lastName}</div>
+                  <div><label className="font-semibold">Nr. Auto: </label>{customer.nrAuto}</div>
+                </div>
+              </>
+            )}
+
           </div>
         </div>
         <footer className="text-center text-sm text-gray-500 flex-shrink-0">
-    
+
         </footer>
       </div>
 
@@ -711,11 +718,11 @@ export function PosPage() {
 
       {/* Keypad always renders above popups */}
       <Keypad open={keyboardOpen} onClose={closeKeyboard} />
-      
+
       {/* Settings Modal */}
-      <SettingsModal 
-        isOpen={isSettingsModalOpen} 
-        onClose={() => setIsSettingsModalOpen(false)} 
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
       />
 
       {/* Cancel Receipt Confirmation Modal */}
@@ -733,11 +740,11 @@ export function PosPage() {
                   Anulează bonul?
                 </h2>
               </div>
-              
+
               <p className="text-sm text-slate-600">
                 Sigur doriți să anulați bonul curent? Toate datele vor fi șterse.
               </p>
-              
+
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
