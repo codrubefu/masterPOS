@@ -161,12 +161,12 @@ export function PosPage() {
       return;
     }
 
-    const currentId = customer.id.toString();
+    const currentId = customer.cnpcui ? customer.cnpcui.toString() : "";
     const hasRoPrefix = /^RO/i.test(currentId);
     setCuiUseRoPrefix(hasRoPrefix);
     setCuiSearchId(currentId.replace(/^RO/i, ""));
     setCuiNrAuto(customer?.nrAuto ?? "");
-  }, [customer?.id, customer?.nrAuto]);
+  }, [customer?.cnpcui, customer?.nrAuto]);
 
   const handleStorno = () => {
     if (!selectedItemId) return;
@@ -333,7 +333,7 @@ export function PosPage() {
   };
 
   const openCuiPopupForEdit = () => {
-    const currentId = customer?.id?.toString() ?? "";
+    const currentId = customer?.cnpcui?.toString() ?? "";
     const hasRoPrefix = /^RO/i.test(currentId);
     setCuiUseRoPrefix(hasRoPrefix);
     setCuiSearchId(currentId.replace(/^RO/i, ""));
@@ -601,7 +601,7 @@ export function PosPage() {
                     onClick={openCuiPopupForEdit}
                     className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                   >
-                    Modifică CUI: {customer.id}
+                    Modifică CUI: {customer.cnpcui}
                   </button>
                   <button
                     type="button"
@@ -617,7 +617,7 @@ export function PosPage() {
                   </button>
                 </div>
                 <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-                  <div><label className="font-semibold">CUI: </label>{customer.cnpCui}</div>
+                  <div><label className="font-semibold">CUI: </label>{customer.cnpcui}</div>
                   <div><label className="font-semibold">Nume: </label>{customer.lastName}</div>
                   <div><label className="font-semibold">Nr. Auto: </label>{customer.nrAuto}</div>
                 </div>

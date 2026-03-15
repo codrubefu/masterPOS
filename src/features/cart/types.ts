@@ -3,7 +3,7 @@ export type PaymentMethod = "cash" | "card" | "mixed" | "modern";
 export interface Customer {
   id: string;
   type: "pf" | "pj";
-  cnpCui?: string;
+  cnpcui?: string;
   firstName?: string;
   lastName?: string;
   cardId?: string;
