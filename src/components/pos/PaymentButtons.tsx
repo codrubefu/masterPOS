@@ -193,7 +193,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
         
         // Show popup and start polling
         setShowPaymentPopup(true);
-        startPolling(baseUrl, originalHandler);
+        startPolling(baseUrl, originalHandler, type);
       } else {
         console.error('Payment error:', data.message || 'Eroare la procesarea plății');
       }
@@ -219,7 +219,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     handlePayment('mixed', onPayMixed);
   };
 
-  const startPolling = (baseUrl: string, originalHandler: () => void) => {
+  const startPolling = (baseUrl: string, originalHandler: () => void, type: 'cash' | 'card' | 'mixed' | 'modern') => {
     // Clean up any existing timers first
     stopPolling();
     
@@ -296,7 +296,40 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           setPaymentError(null);
           setIsLoadingPayment(false);
           setIsLoadingSubtotal(false);
-          
+        // Save bon in database
+          try {
+            const paymentPayload = {
+              type,
+              items: items.map(item => ({
+                ...item,
+                product: { 
+                  ...item.product,
+                  clasa: item.product.clasa,
+                  grupa: item.product.grupa
+                }
+              })),
+              cardAmount,
+              numerarAmount,
+              casa,
+              customer,
+              cashGiven,
+              subtotal,
+              totalDiscount,
+              total,
+              change,
+              ...(pendingPayment ? { pendingPayment } : {})
+            };
+
+            await fetch(`${baseUrl}/api/save-bon-in-database`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(paymentPayload)
+            });
+          } catch (saveError) {
+            console.error('Save bon error:', saveError);
+          }
           // Reset cart and pending payment
           resetCart();
           setPendingPayment(undefined);
