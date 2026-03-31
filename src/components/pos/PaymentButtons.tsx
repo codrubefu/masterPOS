@@ -219,41 +219,40 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
     handlePayment('mixed', onPayMixed);
   };
 
+  // Ref to guard against double save-bon-in-database
+  const saveBonTriggeredRef = useRef(false);
+
   const startPolling = (baseUrl: string, originalHandler: () => void, type: 'cash' | 'card' | 'mixed' | 'modern') => {
-    // Clean up any existing timers first
     stopPolling();
-    
+    saveBonTriggeredRef.current = false;
+
     let isPollingActive = true;
-    
-    // Set timeout for 10 seconds
+
     const timeoutId = setTimeout(() => {
       isPollingActive = false;
       setPaymentError('Timpul de așteptare a expirat. Vă rugăm verificați starea plății.');
       stopPolling();
     }, 10000);
-    
+
     pollingTimeoutRef.current = timeoutId;
     setPollingTimeoutId(timeoutId);
-    
+
     const intervalId = setInterval(async () => {
-      // Stop making requests if polling is no longer active
       if (!isPollingActive) {
         return;
       }
-      
+
       try {
-        // Get all data from store
         const storeState = useCartStore.getState();
         const pendingPayment = storeState.pendingPayment;
-        
+
         if (!pendingPayment) {
           console.error('No pending payment found');
           isPollingActive = false;
           stopPolling();
           return;
         }
-        
-        // Prepare payload with all store data including pendingPayment
+
         const payloadData = {
           bon_no: pendingPayment.bon_no,
           pendingPayment: pendingPayment,
@@ -275,7 +274,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           cardAmount: storeState.cardAmount,
           numerarAmount: storeState.numerarAmount
         };
-        
+
         const response = await fetch(`${baseUrl}/api/payments/is-payment-done`, {
           method: 'POST',
           headers: {
@@ -283,20 +282,22 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           },
           body: JSON.stringify(payloadData)
         });
-        
+
         const data = await response.json();
-        
+
         if (response.ok && data.success) {
-          // Payment is done, clean up everything immediately
+          // Guard: only allow this block to run once
+          if (saveBonTriggeredRef.current) return;
+          saveBonTriggeredRef.current = true;
+
+          // Stop polling immediately before any await
           isPollingActive = false;
           stopPolling();
-          
-          // Reset all state variables
+
           setShowPaymentPopup(false);
           setPaymentError(null);
           setIsLoadingPayment(false);
           setIsLoadingSubtotal(false);
-        // Save bon in database
           try {
             const paymentPayload = {
               type,
@@ -330,23 +331,18 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           } catch (saveError) {
             console.error('Save bon error:', saveError);
           }
-          // Reset cart and pending payment
           resetCart();
           setPendingPayment(undefined);
-          
-          // Reset the enabled state
           if (setEnabled) {
             setEnabled(false);
           }
-          
-          // Call the original handler
           originalHandler();
         }
       } catch (error) {
         console.error('Polling error:', error);
       }
-    }, 500); // Poll every 0.5 seconds
-    
+    }, 500);
+
     pollingIntervalRef.current = intervalId;
     setPollingIntervalId(intervalId);
   };
