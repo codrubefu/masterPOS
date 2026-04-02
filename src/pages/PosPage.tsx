@@ -89,6 +89,8 @@ export function PosPage() {
   const [priceCheckOpen, setPriceCheckOpen] = useState(false);
   const [priceCheckCode, setPriceCheckCode] = useState("");
   const [priceCheckResult, setPriceCheckResult] = useState<CartItem | null>(null);
+  const [priceCheckMessage, setPriceCheckMessage] = useState("Introduceți un cod și apăsați Caută pentru a verifica.");
+  const [priceCheckMessageIsError, setPriceCheckMessageIsError] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [cartInfo, setCartInfo] = useState<any>(null);
   const [cartError, setCartError] = useState<any>(null);
@@ -216,27 +218,37 @@ export function PosPage() {
     setPriceCheckOpen(true);
     setPriceCheckResult(null);
     setPriceCheckCode("");
+    setPriceCheckMessage("Introduceți un cod și apăsați Caută pentru a verifica.");
+    setPriceCheckMessageIsError(false);
   };
 
   const runPriceCheck = async () => {
     const code = priceCheckCode.trim();
     if (!code) {
       setPriceCheckResult(null);
+      setPriceCheckMessage("Introduceți un cod valid");
+      setPriceCheckMessageIsError(true);
       setToast("Introduceți un cod valid");
       return;
     }
     try {
       setToast("Căutare produs...");
-      const info = await fetchProductInfoByUpc(code);
-      if (info) {
-        setPriceCheckResult(info);
-        setToast(`Produs găsit: ${info.product.name}`);
+      const result = await fetchProductInfoByUpc(code);
+      if (result.success) {
+        setPriceCheckResult(result.info);
+        setPriceCheckMessage("");
+        setPriceCheckMessageIsError(false);
+        setToast(`Produs găsit: ${result.info.product.name}`);
       } else {
         setPriceCheckResult(null);
-        setToast("Niciun produs găsit");
+        setPriceCheckMessage(result.error);
+        setPriceCheckMessageIsError(true);
+        setToast(result.error);
       }
     } catch (error) {
       setPriceCheckResult(null);
+      setPriceCheckMessage("Produsul nu a fost gasit");
+      setPriceCheckMessageIsError(true);
       setToast("Eroare la căutarea produsului");
       console.error('Price check error:', error);
     }
@@ -734,7 +746,7 @@ export function PosPage() {
                   </Fragment>
                 </dl>
               ) : (
-                <p className="text-sm text-gray-500">Introduceți un cod și apăsați Caută pentru a verifica.</p>
+                <p className={priceCheckMessageIsError ? "text-sm font-medium text-red-600" : "text-sm text-gray-500"}>{priceCheckMessage}</p>
               )}
             </div>
           </div>
