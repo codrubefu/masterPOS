@@ -1,9 +1,22 @@
 // Fetch product info by UPC (for price check modal, does not add to cart)
+import type { CartItem } from '../features/cart/types';
 import { getConfig } from './configLoader';
 
 const PRODUCT_NOT_FOUND_MESSAGE = "Produsul nu a fost gasit";
 
-export async function fetchProductInfoByUpc(upc: string) {
+type PriceCheckSuccessResult = {
+    success: true;
+    info: CartItem;
+};
+
+type PriceCheckErrorResult = {
+    success: false;
+    error: string;
+};
+
+type PriceCheckResult = PriceCheckSuccessResult | PriceCheckErrorResult;
+
+export async function fetchProductInfoByUpc(upc: string): Promise<PriceCheckResult> {
     try {
         const config = await getConfig();
         const baseUrl = config.middleware?.apiBaseUrl || '';
