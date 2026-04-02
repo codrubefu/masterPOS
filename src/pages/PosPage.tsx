@@ -222,6 +222,13 @@ export function PosPage() {
     setPriceCheckMessageIsError(false);
   };
 
+  const resetPriceCheckInput = () => {
+    setPriceCheckCode("");
+    window.requestAnimationFrame(() => {
+      priceCheckInputRef.current?.focus();
+    });
+  };
+
   const runPriceCheck = async () => {
     const code = priceCheckCode.trim();
     if (!code) {
@@ -229,6 +236,7 @@ export function PosPage() {
       setPriceCheckMessage("Introduceți un cod valid");
       setPriceCheckMessageIsError(true);
       setToast("Introduceți un cod valid");
+      resetPriceCheckInput();
       return;
     }
     try {
@@ -251,6 +259,8 @@ export function PosPage() {
       setPriceCheckMessageIsError(true);
       setToast("Eroare la căutarea produsului");
       console.error('Price check error:', error);
+    } finally {
+      resetPriceCheckInput();
     }
   };
 
