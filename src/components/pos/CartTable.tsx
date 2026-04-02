@@ -85,6 +85,17 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
     }
   };
 
+  const handleKeyboardToggleChange = () => {
+    const nextEnabled = !iskeyboardEnabled;
+    setIsKeyboardEnabled(nextEnabled);
+
+    if (!nextEnabled) {
+      requestAnimationFrame(() => {
+        searchTermRef.current?.focus();
+      });
+    }
+  };
+
   const handleEditItem = (item: CartItem) => {
     setEditingItem(item);
     setEditQuantity(item.qty.toString());
@@ -129,6 +140,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
             onKeyDown={handleKeyDown}
             inputMode="numeric"
             data-keyboard="numeric"
+            data-product-search="true"
             data-request={iskeyboardEnabled ? "false" : "true"}
           />
           <label htmlFor="toggleKeyboard" className="flex items-center gap-2 cursor-pointer select-none">
@@ -155,7 +167,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
               id="toggleKeyboard"
               checked={iskeyboardEnabled}
               data-request="true"
-              onChange={() => setIsKeyboardEnabled(!iskeyboardEnabled)}
+              onChange={handleKeyboardToggleChange}
               className="sr-only" // hide the native checkbox
             />
           </label>

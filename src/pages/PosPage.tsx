@@ -456,12 +456,22 @@ export function PosPage() {
       return;
     }
 
+    const isTextEntryElement = (element: Element | null) => {
+      if (element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+        return true;
+      }
+
+      if (!(element instanceof HTMLInputElement)) {
+        return false;
+      }
+
+      return !["checkbox", "radio", "button", "submit", "reset", "range", "color", "file"].includes(element.type);
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
       // Don't intercept if any input/textarea is already focused
       const activeElement = document.activeElement;
-      if (activeElement instanceof HTMLInputElement ||
-        activeElement instanceof HTMLTextAreaElement ||
-        activeElement instanceof HTMLSelectElement) {
+      if (isTextEntryElement(activeElement)) {
         return;
       }
 
@@ -473,7 +483,7 @@ export function PosPage() {
       }
 
       // Find the search input
-      const searchInput = document.querySelector('input[data-request="true"][placeholder="Caută produs..."]') as HTMLInputElement;
+      const searchInput = document.querySelector('input[data-product-search="true"][data-request="true"]') as HTMLInputElement | null;
 
       if (searchInput) {
         // Focus the search input
