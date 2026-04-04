@@ -76,11 +76,12 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
     previousItemsLengthRef.current = items.length;
   }, [items.length]);
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      handleProductAdd(searchTerm);
+      await handleProductAdd(searchTerm);
       setSearchTerm(""); // Clear the search term after search
+      setIsKeyboardEnabled(false);
       event.currentTarget.blur(); // Close the onscreen keyboard
     }
   };
