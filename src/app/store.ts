@@ -83,6 +83,30 @@ function createId() {
     : Math.random().toString(36).slice(2, 11);
 }
 
+function addMissingProductItem(upc: string, qty: number, casa: number) {
+  const product: Product = {
+    id: `missing-${createId()}`,
+    upc,
+    name: `Produs negasit (${upc})`,
+    price: 0,
+    clasa: "NEGASIT",
+    grupa: "NEGASIT"
+  };
+
+  const item = createCartItem({
+    product,
+    qty,
+    unitPrice: 0,
+    casa
+  });
+
+  return { item, product };
+}
+
+function isMissingProduct(product: Product) {
+  return product.clasa === "NEGASIT" || product.grupa === "NEGASIT";
+}
+
 const memoryStorage: Storage = {
   get length() {
     return 0;
@@ -255,9 +279,36 @@ export const useCartStore = create<CartStore>()(
           const config = await getConfig();
           const baseUrl = config.middleware?.apiBaseUrl || '';
           const casa = get().casa;
+          const qty = input?.qty ?? 1;
+
+          const addMissingProductToCart = (message?: string) => {
+            const { item, product } = addMissingProductItem(upc, qty, casa);
+
+            set((state) => {
+              const items = [...state.items, item];
+              const next = recalcState(items, state.cashGiven);
+              return {
+                ...state,
+                ...next,
+                selectedItemId: item.id,
+                lastAction: `Produs negasit: ${upc}`
+              };
+            });
+
+            return {
+              success: false,
+              itemId: item.id,
+              data: product,
+              error: message || `Produsul cu codul ${upc} nu a fost gasit`
+            };
+          };
           
           const response = await fetch(`${baseUrl}/api/articles/${encodeURIComponent(upc)}?casa=${casa}`);
           if (!response.ok) {
+            if (response.status === 404) {
+              return addMissingProductToCart(`Produsul cu codul ${upc} nu a fost gasit`);
+            }
+
             try {
               const errorJson = await response.json();
               return { success: false, error: errorJson.message || `Server error: ${response.status}` };
@@ -268,7 +319,7 @@ export const useCartStore = create<CartStore>()(
           }
           const apiResponse = await response.json();
           if (!apiResponse.success || !apiResponse.data) {
-            return { success: false, error: apiResponse.message || 'Product not found or invalid response' };
+            return addMissingProductToCart(apiResponse.message || `Produsul cu codul ${upc} nu a fost gasit`);
           }
           const product = {
             id: String(apiResponse.data.id),
@@ -284,9 +335,8 @@ export const useCartStore = create<CartStore>()(
             tax3: apiResponse.data.tax3,
             sgr: apiResponse.data.sgr,
           };
-          const qty = input?.qty ?? 1;
           const overrides = {
-            unitPrice: input?.unitPrice ?? product.price,
+            unitPrice: input?.unitPrice,
             percentDiscount: input?.percentDiscount,
             valueDiscount: input?.valueDiscount,
             storno: input?.storno,
@@ -468,9 +518,10 @@ export const useCartStore = create<CartStore>()(
         // Find the item to delete
         const itemToDelete = state.items.find(i => i.id === id);
         if (!itemToDelete) return { success: false, error: 'Item not found' };
+        const shouldSkipApiSync = isMissingProduct(itemToDelete.product);
         
         // Send delete to server (don't delete SGR tax from server)
-        if (!['1112', '1113', '1114'].includes(itemToDelete.product.id)) {
+        if (!shouldSkipApiSync && !['1112', '1113', '1114'].includes(itemToDelete.product.id)) {
           try {
             const config = await getConfig();
             const baseUrl = config.middleware?.apiBaseUrl || '';
@@ -540,9 +591,11 @@ export const useCartStore = create<CartStore>()(
           });
           
           // Update SGR items on server
-          getConfig().then(config => {
-            updateSgrItems(get().items, config, casa);
-          });
+          if (!shouldSkipApiSync) {
+            getConfig().then(config => {
+              updateSgrItems(get().items, config, casa);
+            });
+          }
         });
       },
       moveItemUp: (id) =>

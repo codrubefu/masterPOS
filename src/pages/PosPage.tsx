@@ -570,6 +570,11 @@ export function PosPage() {
     }
   };
 
+  const hasMissingProducts = useMemo(
+    () => items.some((item) => item.product.clasa === "NEGASIT" || item.product.grupa === "NEGASIT"),
+    [items]
+  );
+
   return (
     <main className="h-screen bg-slate-100 p-6 lg:p-2 overflow-hidden">
       <div className="mx-auto flex max-w-[1600px] flex-col gap-6 h-full">
@@ -641,6 +646,7 @@ export function PosPage() {
               onSubtotalClick={handleSubtotalClick}
               enabled={paymentButtonsEnabled}
               setEnabled={setPaymentButtonsEnabled}
+              hasMissingProducts={hasMissingProducts}
             />
             <ActionsPanel
               onMoveUp={() => selectedItemId && moveItemUp(selectedItemId)}

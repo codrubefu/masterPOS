@@ -13,9 +13,10 @@ interface PaymentButtonsProps {
   onSubtotalClick?: (continueFlow: () => void) => void | Promise<void>;
   enabled?: boolean;
   setEnabled?: (enabled: boolean) => void;
+  hasMissingProducts?: boolean;
 }
 
-export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, onExit, onSubtotalClick, enabled = false, setEnabled }: PaymentButtonsProps) {
+export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, onExit, onSubtotalClick, enabled = false, setEnabled, hasMissingProducts = false }: PaymentButtonsProps) {
   const { total, items, casa, customer, cashGiven, subtotal, totalDiscount, change, resetCart, cardAmount, numerarAmount, setPendingPayment, pendingPayment } = useCartStore((state) => ({
     total: state.total,
     items: state.items,
@@ -50,6 +51,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   const isSinglePaymentDisabled = isMixedPaymentActive;
   // Disable all payment options if subtotal is 0
   const isPaymentDisabled = subtotal <= 0;
+  const isSubtotalDisabled = enabled || isLoadingSubtotal || subtotal <= 0 || hasMissingProducts;
 
   useHotkeys(POS_SHORTCUTS.payCash, (event) => {
     if (!enabled || isLoadingPayment || isSinglePaymentDisabled) return;
@@ -130,6 +132,10 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
   };
 
   const handleSubTotal = async () => {
+    if (isSubtotalDisabled) {
+      return;
+    }
+
     if (onSubtotalClick) {
       await onSubtotalClick(() => {
         void executeSubtotalFlow();
@@ -391,7 +397,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
           type="button" 
           className={`${buttonClass} bg-gray-700 hover:bg-gray-600 col-span-2 lg:col-span-4`} 
           onClick={handleSubTotal}
-          disabled={enabled || isLoadingSubtotal || subtotal <= 0}
+          disabled={isSubtotalDisabled}
         >
           {isLoadingSubtotal ? 'Se procesează...' : `Sub Total (Total: ${total})`}
         </button>
