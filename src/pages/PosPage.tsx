@@ -96,6 +96,8 @@ export function PosPage() {
   const [cartError, setCartError] = useState<any>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [isPriceKeyboardEnabled, setIsPriceKeyboardEnabled] = useState(false);
+  const productSearchQueueRef = useRef<string[]>([]);
+  const isProcessingProductQueueRef = useRef(false);
 
   // Initialize global request keyboard functionality
   useGlobalRequestKeyboard(setKeyboardOpen);
@@ -282,50 +284,57 @@ export function PosPage() {
   // State to control PaymentButtons enabled
   const [paymentButtonsEnabled, setPaymentButtonsEnabled] = useState(false);
 
+  const processProductSearch = async (searchTerm: string) => {
+    try {
+      setCartInfo(`Căutare produs: ${searchTerm}...`);
+      setCartError(false);
+      const result = await addProductByUpc(searchTerm);
+      setPaymentButtonsEnabled(false);
+      if (result.success) {
+        setCartInfo(`Produs găsit și adăugat: ${result.data ? result.data.name : searchTerm}`);
+        setCartError(false);
+      } else {
+        setCartInfo(result.error || `Produsul cu codul ${searchTerm} nu a fost găsit`);
+        setCartError(true);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setCartInfo(`Eroare la căutarea produsului: ${searchTerm}`);
+      setCartError(true);
+    }
+  };
+
+  const processQueuedProductSearches = async () => {
+    if (isProcessingProductQueueRef.current) {
+      return;
+    }
+
+    isProcessingProductQueueRef.current = true;
+    while (productSearchQueueRef.current.length > 0) {
+      const nextSearch = productSearchQueueRef.current.shift();
+      if (!nextSearch) {
+        continue;
+      }
+      await processProductSearch(nextSearch);
+    }
+    isProcessingProductQueueRef.current = false;
+  };
+
   const handleProductAdd = async (searchTerm: string) => {
-    if (!searchTerm.trim()) {
+    const normalizedSearchTerm = searchTerm.trim();
+    if (!normalizedSearchTerm) {
       setCartInfo("Introduceți un termen de căutare");
       setCartError(true);
       return;
     }
 
-    try {
-      setCartInfo("Căutare produs...");
+    productSearchQueueRef.current.push(normalizedSearchTerm);
+    if (isProcessingProductQueueRef.current) {
+      setCartInfo(`Produs în coadă: ${normalizedSearchTerm}`);
       setCartError(false);
-      console.log('Searching for product with UPC:', searchTerm);
-      console.log('Current cart items:', items);
-      // Check if product already exists in cart (trim spaces for comparison)
-      const existingItem = items.find(item =>
-        item.product.upc.trim() === searchTerm.trim() && !item.storno
-      );
-      console.log('Existing item in cart:', existingItem);
-      if (existingItem) {
-        // Product exists, use updateItem to increment quantity
-        await updateItem(existingItem.id, (item) => ({
-          ...item,
-          qty: item.qty + 1
-        }));
-        setPaymentButtonsEnabled(false);
-        setCartInfo(`Cantitate actualizată: ${existingItem.product.name}`);
-        setCartError(false);
-      } else {
-        // Product doesn't exist, add new
-        const result = await addProductByUpc(searchTerm);
-        setPaymentButtonsEnabled(false); // Disable payment buttons after product add
-        if (result.success) {
-          console.log('Added product result:', result);
-          setCartInfo(`Produs găsit și adăugat: ${result.data ? result.data.name : searchTerm}`);
-          setCartError(false);
-        } else {
-          setCartInfo(result.error || "Produsul nu a putut fi adăugat");
-          setCartError(true);
-        }
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      setCartInfo("Eroare la căutarea produsului");
-      setCartError(true);
     }
+
+    await processQueuedProductSearches();
   };
 
   const handleClientUpdate = async (updatedCustomer: Customer) => {
