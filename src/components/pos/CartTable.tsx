@@ -190,6 +190,7 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                 const totals = calculateLineTotals(item);
                 const isSelected = item.id === selectedId;
                 const isEven = index % 2 === 0;
+                const isMissingProduct = item.product.clasa === "NEGASIT" || item.product.grupa === "NEGASIT";
                 return (
                   <Fragment key={item.id}>
                     <tr
@@ -198,7 +199,11 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                       aria-selected={isSelected}
                       className={clsx(
                         "transition-colors border-t-2",
-                        isSelected 
+                        isMissingProduct
+                          ? isSelected
+                            ? "bg-red-100 border-t-red-300"
+                            : "bg-red-50 hover:bg-red-100 border-t-red-200"
+                          : isSelected 
                           ? "bg-indigo-50/80 border-t-indigo-200" 
                           : isEven 
                             ? "bg-white hover:bg-slate-50 border-t-gray-200" 
@@ -208,8 +213,9 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                     >
                       <td colSpan={6} className="px-3 py-2">
                         <div className="flex items-center gap-3">
-                          <span className="font-semibold text-slate-900">{item.product.name}</span>
-                          <span className="text-xs text-gray-500">UPC: {item.product.upc}</span>
+                          <span className={clsx("font-semibold", isMissingProduct ? "text-red-700" : "text-slate-900")}>{item.product.name}</span>
+                          <span className={clsx("text-xs", isMissingProduct ? "text-red-500" : "text-gray-500")}>UPC: {item.product.upc}</span>
+                          {isMissingProduct && <span className="text-xs font-semibold text-red-600">NEGASIT</span>}
                           {item.storno && <span className="text-xs font-semibold text-red-500">STORNO</span>}
                           {item.product.sgr && <span className="text-xs font-semibold text-green-600">🔄 SGR {item.product.sgr}</span>}
                         </div>
@@ -218,7 +224,11 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                     <tr
                       className={clsx(
                         "transition-colors",
-                        isSelected 
+                        isMissingProduct
+                          ? isSelected
+                            ? "bg-red-100 text-red-700"
+                            : "bg-red-50 text-red-700 hover:bg-red-100"
+                          : isSelected 
                           ? "bg-indigo-50/80" 
                           : isEven 
                             ? "bg-white hover:bg-slate-50" 
@@ -238,7 +248,11 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                       aria-selected={isSelected}
                       className={clsx(
                         "transition-colors border-b-2",
-                        isSelected 
+                        isMissingProduct
+                          ? isSelected
+                            ? "bg-red-100 border-b-red-300 text-red-700"
+                            : "bg-red-50 border-b-red-200 text-red-700 hover:bg-red-100"
+                          : isSelected 
                           ? "bg-indigo-50/80 border-b-indigo-200" 
                           : isEven 
                             ? "bg-white hover:bg-slate-50 border-b-gray-200" 
@@ -266,16 +280,18 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
                           >
                             Șterge
                           </button>
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleEditItem(item);
-                            }}
-                            className={clsx(rowButtonClass, "bg-green-50 text-green-600 border-green-200")}
-                          >
-                            Modifica
-                          </button>
+                          {!isMissingProduct && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleEditItem(item);
+                              }}
+                              className={clsx(rowButtonClass, "bg-green-50 text-green-600 border-green-200")}
+                            >
+                              Modifica
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
