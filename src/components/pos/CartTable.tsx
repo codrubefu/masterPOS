@@ -79,8 +79,14 @@ export function CartTable({ items, selectedId, onSelect, onDelete, onMoveUp, onM
   const handleKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      await handleProductAdd(searchTerm);
-      setSearchTerm(""); // Clear the search term after search
+      const submittedSearchTerm = event.currentTarget.value;
+
+      setSearchTerm("");
+      if (searchTermRef.current) {
+        searchTermRef.current.value = "";
+      }
+
+      await handleProductAdd(submittedSearchTerm);
       setIsKeyboardEnabled(false);
       event.currentTarget.blur(); // Close the onscreen keyboard
     }
