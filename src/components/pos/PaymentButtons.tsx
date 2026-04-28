@@ -238,7 +238,7 @@ export function PaymentButtons({ onPayCash, onPayCard, onPayMixed, onPayModern, 
       isPollingActive = false;
       setPaymentError('Timpul de așteptare a expirat. Vă rugăm verificați starea plății.');
       stopPolling();
-    }, 10000);
+    }, 30000);
 
     pollingTimeoutRef.current = timeoutId;
     setPollingTimeoutId(timeoutId);
